@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()

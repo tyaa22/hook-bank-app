@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 final class OnboardingService: OnboardingServiceProtocol {
     
