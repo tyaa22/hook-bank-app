@@ -1,21 +1,18 @@
-//
-//  ContentView.swift
-//  HookBank
-//
-//  Created by Cyintia Limmanto on 18/08/26.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            ActivitySearchView()
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+            
+            PDFExtractionView()
+                .tabItem {
+                    Label("PDF Tool", systemImage: "doc.text")
+                }
         }
-        .padding()
     }
 }
 
