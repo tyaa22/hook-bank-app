@@ -1,4 +1,5 @@
 import SwiftUI
+import Core
 
 struct ActivityDetailView: View {
     let activity: Activity
@@ -12,8 +13,8 @@ struct ActivityDetailView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                     
-                    if activity.property != "-" {
-                        Label(activity.property, systemImage: "info.circle")
+                    if !activity.possibleProperties.isEmpty {
+                        Label(activity.possibleProperties.joined(separator: ", "), systemImage: "info.circle")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -21,17 +22,6 @@ struct ActivityDetailView: View {
                 .padding(.top)
                 
                 Divider()
-                
-                // Description
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Description")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    Text(activity.activityDescription)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                }
                 
                 // Goal
                 VStack(alignment: .leading, spacing: 8) {
@@ -62,7 +52,7 @@ struct ActivityDetailView: View {
                         .font(.title2)
                         .fontWeight(.semibold)
                     
-                    Text(activity.property)
+                    Text(activity.possibleProperties.isEmpty ? "-" : activity.possibleProperties.joined(separator: ", "))
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
@@ -70,6 +60,8 @@ struct ActivityDetailView: View {
             .padding()
         }
         .navigationTitle("Activity Info")
+#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+#endif
     }
 }

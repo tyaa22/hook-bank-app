@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import SwiftData
+import Core
 
 struct PDFExtractionView: View {
     @Environment(\.modelContext) private var modelContext
@@ -96,7 +97,7 @@ struct PDFExtractionView: View {
                                                 .font(.system(.caption2, design: .monospaced))
                                                 .padding(8)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                                .background(Color(UIColor.tertiarySystemBackground))
+                                                .background(Color(white: 0.95))
                                                 .cornerRadius(6)
                                         }
                                         .padding(.bottom, 4)
@@ -104,7 +105,7 @@ struct PDFExtractionView: View {
                                 }
                                 .padding()
                             }
-                            .background(Color(UIColor.secondarySystemBackground))
+                            .background(Color(white: 0.90))
                             .cornerRadius(12)
                             .padding(.horizontal)
                         }

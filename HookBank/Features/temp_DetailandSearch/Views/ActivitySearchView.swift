@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Core
 
 struct ActivitySearchView: View {
     // SwiftData drives the source of truth — sorted alphabetically
@@ -20,7 +21,7 @@ struct ActivitySearchView: View {
 
 
 
-                                Text(activity.activityDescription)
+                                Text(activity.goal)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .lineLimit(2)
@@ -33,7 +34,7 @@ struct ActivitySearchView: View {
             .navigationTitle("Activities")
             .searchable(text: $viewModel.searchText, prompt: "Search activities…")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     Toggle("Semantic Search", isOn: $viewModel.useSemanticSearch)
                         .toggleStyle(.switch)
                         .scaleEffect(0.8)

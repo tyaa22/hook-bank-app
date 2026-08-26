@@ -5,24 +5,6 @@
 //  Created by Cyintia Limmanto on 18/08/26.
 //
 
-//import SwiftUI
-//
-//@main
-//struct HookBankApp: App {
-//    var body: some Scene {
-//        WindowGroup {
-//            ContentView()
-//        }
-//    }
-//}
-
-//
-//  CobaNLApp.swift
-//  CobaNL
-//
-//  Created by Irfan Hanif Khoiru Rijal on 19/08/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -41,8 +23,9 @@ struct HookBankApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .modelContainer(container)
+            HomeView()
+//            ContentView()
+//                .modelContainer(container)
         }
     }
 }

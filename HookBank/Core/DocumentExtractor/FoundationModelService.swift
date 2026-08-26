@@ -18,8 +18,11 @@ struct ExtractedActivity {
     @Guide(description: "Step-by-step instructions or rules on how to play/conduct the activity. Must be corrected to normal spelling.")
     var howToPlay: String
 
-    @Guide(description: "Specific properties, parameters, materials, or configuration details of the activity (e.g. 'Materials: name tags, napkin, cards' or group size requirements). If not found or empty, fill with '-'.")
+    @Guide(description: "Specific properties, parameters, materials, or configuration details of the activity (e.g. 'Materials: name tags, napkin, cards'). If not found or empty, fill with '-'.")
     var property: String
+
+    @Guide(description: "The number of participants or group size required (e.g. '10-20', '5+', 'Minimum 4'). Look for keywords like 'participants', 'players', 'people', or any explicit number range. If not found, fill with '-'.")
+    var participants: String
 }
 
 /// Top-level wrapper so the model returns all activities in one structured call (bulk support).
@@ -34,17 +37,17 @@ struct ActivityExtractionResult {
 /// Uses Apple's Foundation Models framework (on-device LLM, iOS 26+) to extract
 /// structured Activity data from raw PDF text.
 @MainActor
-class FoundationModelsService {
-    static let shared = FoundationModelsService()
+public class FoundationModelsService {
+    public static let shared = FoundationModelsService()
     private init() {}
 
     // MARK: - Errors
 
-    enum ExtractionError: LocalizedError {
+    public enum ExtractionError: LocalizedError {
         case modelUnavailable
         case noActivitiesFound
 
-        var errorDescription: String? {
+        public var errorDescription: String? {
             switch self {
             case .modelUnavailable:
                 return "Apple Intelligence is not available on this device. Please enable Apple Intelligence in Settings → Apple Intelligence & Siri."
@@ -58,7 +61,7 @@ class FoundationModelsService {
 
     /// Processes multiple PDF pages page-by-page sequentially to prevent context window overflow.
     /// Passes the current page index and total page count back via `progress` block.
-    func extractActivities(from pages: [String], progress: @escaping (Int, Int) -> Void) async throws -> [Activity] {
+    public func extractActivities(from pages: [String], progress: @escaping (Int, Int) -> Void) async throws -> [Activity] {
         // Guard: model must be available on this device / OS
         guard SystemLanguageModel.default.isAvailable else {
             throw ExtractionError.modelUnavailable
@@ -100,6 +103,7 @@ class FoundationModelsService {
             3. "goal": The text after "Goal:" corrected to proper spelling.
             4. "howToPlay": The description of steps or rules explaining how to play.
             5. "property": Materials, setup rules, or configurations needed. If not found or empty, you MUST fill it with "-".
+            6. "participants": The required group or participant count (e.g. '10-20', '5+', 'Minimum 4'). Look for keywords like 'participants', 'players', 'people', or any number range. If not found, fill with "-".
 
             If no activities are found on this page, return an empty list.
 
@@ -115,12 +119,13 @@ class FoundationModelsService {
 
                 let extracted = response.content.activities
                 let mapped = extracted.map { item in
-                    Activity(
+                    let combinedGoal = item.description.isEmpty ? item.goal : "\(item.description)\n\nGoal: \(item.goal)"
+                    return Activity(
                         name: item.name,
-                        activityDescription: item.description,
-                        goal: item.goal,
+                        participants: item.participants.isEmpty ? "-" : item.participants,
+                        goal: combinedGoal,
                         howToPlay: item.howToPlay,
-                        property: item.property.isEmpty ? "-" : item.property
+                        possibleProperties: [item.property.isEmpty ? "-" : item.property]
                     )
                 }
                 allActivities.append(contentsOf: mapped)

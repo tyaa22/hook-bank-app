@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import Core
 
 class NLSearchService {
     static let shared = NLSearchService()
@@ -31,7 +32,7 @@ class NLSearchService {
         
         // We will match against a combination of name and description
         let scoredActivities = activities.map { activity -> (Activity, Double) in
-            let textToMatch = "\(activity.name). \(activity.activityDescription). Goal: \(activity.goal). Rules: \(activity.howToPlay). Properties: \(activity.property)"
+            let textToMatch = "\(activity.name). Goal: \(activity.goal). Rules: \(activity.howToPlay). Properties: \(activity.possibleProperties.joined(separator: ", "))"
             let distance = self.distance(for: query, against: textToMatch)
             return (activity, distance)
         }

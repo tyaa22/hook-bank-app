@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import SwiftData
+import Core
 
 @MainActor
 class PDFExtractionViewModel: ObservableObject {

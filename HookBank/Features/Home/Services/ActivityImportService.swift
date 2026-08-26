@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import Core
 
 @MainActor
 class ActivityImportService {
