@@ -4,9 +4,6 @@ import Core
 public struct HomeView: View {
     @State private var viewModel = HomeViewModel()
     @State private var searchText: String = ""
-    @State private var showingConfirmationDialog: Bool = false
-    private var confirmationDialogTitle: String = "Add a Hook"
-    private var confirmationDialogMessage: String = "Choose how you'd like to add a hook."
     @State private var showAddSheet: Bool = false
     @State private var showImportPDFSheet: Bool = false
     
@@ -73,34 +70,19 @@ public struct HomeView: View {
                 // Floating Search Bar overlay
                 FloatingSearchBar(
                     searchText: $searchText,
-                    onAddTapped: {
-                        showingConfirmationDialog = true
-                    }
+                    onAddManually: { showAddSheet = true },
+                    onImportPDF: { showImportPDFSheet = true }
                 )
                 .padding(20)
             }
 #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
 #endif
-            //Add Confirmation Dialog
-            .confirmationDialog(Text(confirmationDialogTitle),
-                isPresented: $showingConfirmationDialog,
-                titleVisibility: .visible,
-                actions: {
-                Button("Add Manually") { showAddSheet = true }
-                Button("Import PDF") { showImportPDFSheet = true }
-                Button("Cancel", role: .destructive) {
-                    showingConfirmationDialog.toggle()
-                }
-            }, message: {
-                confirmationDialogMessage == "" ? nil : Text(confirmationDialogMessage)
-            }
-            )
             .sheet(isPresented: $showAddSheet) {
                 AddHookView(viewModel: viewModel)
             }
             .sheet(isPresented: $showImportPDFSheet) {
-                ImportPDFView()
+                ImportPDFView(viewModel: viewModel)
                     .presentationDetents([.medium])
             }
         }

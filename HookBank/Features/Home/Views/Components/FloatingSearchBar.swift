@@ -2,8 +2,9 @@ import SwiftUI
 
 struct FloatingSearchBar: View {
     @Binding var searchText: String
-    var onAddTapped: () -> Void
-    
+    var onAddManually: () -> Void
+    var onImportPDF: () -> Void
+
     // Tweak this number to change the transparency!
     // 1.0 is full frosted glass. Lower values make it more transparent.
     let glassOpacity: Double = 0.80
@@ -29,13 +30,23 @@ struct FloatingSearchBar: View {
                 .glassEffect()
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 
-                // Circular Plus Button
-                Button(action: onAddTapped) {
+                // Circular Plus Button with Menu
+                Menu {
+                    Button {
+                        onAddManually()
+                    } label: {
+                        Label("Add Manually", systemImage: "pencil")
+                    }
+                    Button {
+                        onImportPDF()
+                    } label: {
+                        Label("Import PDF", systemImage: "doc.fill")
+                    }
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.black)
                         .frame(width: 44, height: 44)
-                        // Native SwiftUI Liquid Glass for the circle:
                         .glassEffect(in: Circle())
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 }
@@ -64,13 +75,23 @@ struct FloatingSearchBar: View {
                 )
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                 
-                // Circular Plus Button
-                Button(action: onAddTapped) {
+                // Circular Plus Button with Menu
+                Menu {
+                    Button {
+                        onAddManually()
+                    } label: {
+                        Label("Add Manually", systemImage: "pencil")
+                    }
+                    Button {
+                        onImportPDF()
+                    } label: {
+                        Label("Import PDF", systemImage: "doc.fill")
+                    }
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.black)
                         .frame(width: 44, height: 44)
-                    // Native SwiftUI Liquid Glass for the circle:
                         .background(
                             .ultraThinMaterial.opacity(glassOpacity),
                             in: Circle()
@@ -95,7 +116,7 @@ struct FloatingSearchBar: View {
             
         VStack {
             Spacer()
-            FloatingSearchBar(searchText: .constant(""), onAddTapped: {})
+            FloatingSearchBar(searchText: .constant(""), onAddManually: {}, onImportPDF: {})
         }
     }
 }

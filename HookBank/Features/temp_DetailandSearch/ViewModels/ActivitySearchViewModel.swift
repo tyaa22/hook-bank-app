@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Core
 
 @MainActor
 class ActivitySearchViewModel: ObservableObject {
@@ -40,10 +41,9 @@ class ActivitySearchViewModel: ObservableObject {
         } else {
             filteredActivities = allActivities.filter { activity in
                 activity.name.localizedCaseInsensitiveContains(trimmed) ||
-                activity.activityDescription.localizedCaseInsensitiveContains(trimmed) ||
                 activity.goal.localizedCaseInsensitiveContains(trimmed) ||
                 activity.howToPlay.localizedCaseInsensitiveContains(trimmed) ||
-                activity.property.localizedCaseInsensitiveContains(trimmed)
+                activity.possibleProperties.joined(separator: " ").localizedCaseInsensitiveContains(trimmed)
             }
         }
     }

@@ -1,9 +1,10 @@
 import Foundation
+import SwiftData
 
 /// Represents a Hook activity.
-/// This class is designed to be easily adaptable to SwiftData (@Model) in the future.
-public class Activity: Identifiable, Hashable {
-    public let id: UUID
+@Model
+public final class Activity: Identifiable, Hashable {
+    @Attribute(.unique) public var id: UUID
     public var name: String
     public var participants: String
     public var goal: String
@@ -13,7 +14,7 @@ public class Activity: Identifiable, Hashable {
     public init(
         id: UUID = UUID(),
         name: String,
-        participants: String,
+        participants: String = "-",
         goal: String,
         howToPlay: String,
         possibleProperties: [String] = []
@@ -24,15 +25,6 @@ public class Activity: Identifiable, Hashable {
         self.goal = goal
         self.howToPlay = howToPlay
         self.possibleProperties = possibleProperties
-    }
-    
-    // Hashable conformance for SwiftUI Lists and Navigation
-    public static func == (lhs: Activity, rhs: Activity) -> Bool {
-        lhs.id == rhs.id
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
     }
 }
 
