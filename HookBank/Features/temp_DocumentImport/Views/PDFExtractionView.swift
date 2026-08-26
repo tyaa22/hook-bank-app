@@ -6,6 +6,8 @@ struct PDFExtractionView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = PDFExtractionViewModel()
     @State private var isImporterPresented = false
+    @State private var copiedAll = false
+    @State private var copiedPageIndex: Int? = nil
 
     var body: some View {
         NavigationStack {
@@ -27,20 +29,68 @@ struct PDFExtractionView: View {
 
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("PDF Preview (\(viewModel.extractedPages.count) Page\(viewModel.extractedPages.count == 1 ? "" : "s") Extracted)")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
+                            HStack {
+                                Text("PDF Preview (\(viewModel.extractedPages.count) Page\(viewModel.extractedPages.count == 1 ? "" : "s") Extracted)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    UIPasteboard.general.string = viewModel.extractedPages.joined(separator: "\n\n")
+                                    withAnimation {
+                                        copiedAll = true
+                                    }
+                                    Task {
+                                        try? await Task.sleep(nanoseconds: 1_500_000_000)
+                                        withAnimation {
+                                            copiedAll = false
+                                        }
+                                    }
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: copiedAll ? "checkmark.circle.fill" : "doc.on.doc")
+                                        Text(copiedAll ? "Copied" : "Copy All")
+                                    }
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(copiedAll ? .green : .indigo)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
 
                             ScrollView {
                                 LazyVStack(alignment: .leading, spacing: 12) {
                                     ForEach(0..<viewModel.extractedPages.count, id: \.self) { index in
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Page \(index + 1)")
-                                                .font(.caption)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.indigo)
+                                            HStack {
+                                                Text("Page \(index + 1)")
+                                                    .font(.caption)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(.indigo)
+                                                
+                                                Spacer()
+                                                
+                                                Button(action: {
+                                                    UIPasteboard.general.string = viewModel.extractedPages[index]
+                                                    withAnimation {
+                                                        copiedPageIndex = index
+                                                    }
+                                                    Task {
+                                                        try? await Task.sleep(nanoseconds: 1_500_000_000)
+                                                        withAnimation {
+                                                            if copiedPageIndex == index {
+                                                                copiedPageIndex = nil
+                                                            }
+                                                        }
+                                                    }
+                                                }) {
+                                                    Image(systemName: copiedPageIndex == index ? "checkmark.circle.fill" : "doc.on.doc")
+                                                        .font(.caption)
+                                                        .foregroundColor(copiedPageIndex == index ? .green : .secondary)
+                                                }
+                                            }
                                             
                                             Text(viewModel.extractedPages[index])
                                                 .font(.system(.caption2, design: .monospaced))
