@@ -112,3 +112,7 @@ Templates/.generated/
 *.generated.swift
 R.generated.swift
 build/
+
+# Nguawur rek, jangan di push
+GoogleService-Info.plist
+

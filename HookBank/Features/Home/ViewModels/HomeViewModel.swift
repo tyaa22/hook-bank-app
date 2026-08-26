@@ -14,9 +14,14 @@ public final class HomeViewModel {
     var importError: String? = nil
 
     private let extractor: DocumentTextExtracting
+    private let llmService: LLMActivityExtracting
 
-    public init(extractor: DocumentTextExtracting = PDFTextExtractor()) {
+    public init(
+        extractor: DocumentTextExtracting = PDFTextExtractor(),
+        llmService: LLMActivityExtracting = GeminiAIService.shared
+    ) {
         self.extractor = extractor
+        self.llmService = llmService
     }
 
     // MARK: - Manual activity management
@@ -53,7 +58,7 @@ public final class HomeViewModel {
         }
     }
 
-    /// Step 2 — send extracted pages to on-device LLM and add results to the activity list.
+    /// Step 2 — send extracted pages to Gemini LLM and add results to the activity list.
     func analyzeWithAI(onComplete: @escaping () -> Void) {
         guard !extractedPages.isEmpty else { return }
 
@@ -64,7 +69,7 @@ public final class HomeViewModel {
 
         Task {
             do {
-                let newActivities = try await FoundationModelsService.shared.extractActivities(
+                let newActivities = try await llmService.extractActivities(
                     from: extractedPages
                 ) { [weak self] current, total in
                     guard let self else { return }
@@ -90,3 +95,4 @@ public final class HomeViewModel {
         }
     }
 }
+

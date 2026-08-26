@@ -17,11 +17,15 @@ let package = Package(
             targets: ["Features"]
         )
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "12.18.0")
+    ],
     targets: [
         .target(
             name: "Core",
-            dependencies: [],
+            dependencies: [
+                .product(name: "FirebaseAILogic", package: "firebase-ios-sdk")
+            ],
             path: "Core"
         ),
         .target(
@@ -31,3 +35,4 @@ let package = Package(
         )
     ]
 )
+

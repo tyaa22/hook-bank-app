@@ -6,13 +6,13 @@ import Core
 class ActivityImportService {
     static let shared = ActivityImportService()
     
-    private let llmService: FoundationModelsService
+    private let llmService: LLMActivityExtracting
     
-    init(llmService: FoundationModelsService = .shared) {
+    init(llmService: LLMActivityExtracting = GeminiAIService.shared) {
         self.llmService = llmService
     }
     
-    /// Query the LLM to structure already extracted raw text pages into Activity models, and insert into SwiftData.
+    /// Query Gemini LLM to structure already extracted raw text pages into Activity models, and insert into SwiftData.
     func importActivities(
         from pages: [String],
         modelContext: ModelContext,
@@ -28,3 +28,4 @@ class ActivityImportService {
         return activities.count
     }
 }
+
