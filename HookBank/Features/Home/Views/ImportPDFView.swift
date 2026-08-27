@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 import UniformTypeIdentifiers
 
 public struct ImportPDFView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: HomeViewModel
 
@@ -264,7 +266,7 @@ public struct ImportPDFView: View {
         case .extracted:
             Button(action: {
                 state = .analyzing
-                viewModel.analyzeWithAI {
+                viewModel.analyzeWithAI(context: context) {
                     dismiss()
                 }
             }) {

@@ -11,8 +11,8 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     
     /// Candidate models in order of priority. If a model encounters token limit / quota / busy, it automatically falls back to the next one.
     public let modelCandidates: [String] = [
-        "gemini-3.5-flash",
-        "gemini-3.5-flash-lite"
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
     ]
     
     private let firebaseAI: FirebaseAI
@@ -135,6 +135,7 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         
         var allActivities: [Activity] = []
         let totalPages = pages.count
+        var lastPageError: Error?
         
         for (index, pageText) in pages.enumerated() {
             let currentPage = index + 1
@@ -148,11 +149,15 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
                 let pageActivities = try await extractFromSinglePageWithFallback(pageText: trimmedText, pageNumber: currentPage)
                 allActivities.append(contentsOf: pageActivities)
             } catch {
+                lastPageError = error
                 print("⚠️ [GeminiAIService] Failed extracting page \(currentPage): \(error.localizedDescription)")
             }
         }
         
         guard !allActivities.isEmpty else {
+            if let error = lastPageError {
+                throw error
+            }
             throw GeminiError.noActivitiesFound
         }
         

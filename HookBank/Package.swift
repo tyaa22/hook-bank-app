@@ -24,7 +24,8 @@ let package = Package(
         .target(
             name: "Core",
             dependencies: [
-                .product(name: "FirebaseAILogic", package: "firebase-ios-sdk")
+                .product(name: "FirebaseAILogic", package: "firebase-ios-sdk"),
+                .product(name: "FirebaseAppCheck", package: "firebase-ios-sdk")
             ],
             path: "Core"
         ),

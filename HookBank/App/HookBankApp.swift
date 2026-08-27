@@ -30,8 +30,7 @@ struct HookBankApp: App {
     var body: some Scene {
         WindowGroup {
             HomeView()
-//            ContentView()
-//                .modelContainer(container)
+                .modelContainer(container)
         }
     }
     

@@ -1,9 +1,12 @@
 import SwiftUI
+import SwiftData
 import Core
 
 public struct AddHookView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     var viewModel: HomeViewModel
+    var activityToEdit: Activity? = nil
     
     @State private var title: String = ""
     @State private var minParticipants: Int = 1
@@ -20,8 +23,12 @@ public struct AddHookView: View {
     
     let grayBackground = Color("CardBackgroundColor")
     
-    public init(viewModel: HomeViewModel) {
+    private var isEditMode: Bool { activityToEdit != nil }
+    private var headerTitle: String { isEditMode ? "Edit Hook" : "Add Hook" }
+    
+    public init(viewModel: HomeViewModel, activityToEdit: Activity? = nil) {
         self.viewModel = viewModel
+        self.activityToEdit = activityToEdit
     }
     
     public var body: some View {
@@ -39,7 +46,7 @@ public struct AddHookView: View {
                 
                 Spacer()
                 
-                Text("Add Hook")
+                Text(headerTitle)
                     .font(.headline)
                     .fontWeight(.semibold)
                 
@@ -81,32 +88,72 @@ public struct AddHookView: View {
                             .fontWeight(.bold)
                         
                         VStack(spacing: 0) {
-                            Stepper(value: $minParticipants, in: 1...100) {
+                            Stepper(
+                                onIncrement: {
+                                    if minParticipants < 100 { minParticipants += 1 }
+                                },
+                                onDecrement: {
+                                    if minParticipants > 1 { minParticipants -= 1 }
+                                }
+                            ) {
                                 HStack {
                                     Text("Minimum")
                                         .foregroundColor(Color(white: 0.7))
                                     Spacer()
-                                    Text("\(minParticipants)")
+                                    TextField("", value: $minParticipants, format: .number)
+                                        .keyboardType(.numberPad)
+                                        .multilineTextAlignment(.trailing)
                                         .fontWeight(.semibold)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.white)
+                                        .cornerRadius(8)
                                 }
                             }
                             .padding()
                             
                             Divider().padding(.horizontal)
                             
-                            Stepper(value: $maxParticipants, in: minParticipants...100) {
+                            Stepper(
+                                onIncrement: {
+                                    if maxParticipants < 100 { maxParticipants += 1 }
+                                },
+                                onDecrement: {
+                                    if maxParticipants > minParticipants { maxParticipants -= 1 }
+                                }
+                            ) {
                                 HStack {
                                     Text("Maximum")
                                         .foregroundColor(Color(white: 0.7))
                                     Spacer()
-                                    Text("\(maxParticipants)")
+                                    TextField("", value: $maxParticipants, format: .number)
+                                        .keyboardType(.numberPad)
+                                        .multilineTextAlignment(.trailing)
                                         .fontWeight(.semibold)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.white)
+                                        .cornerRadius(8)
                                 }
                             }
                             .padding()
                         }
                         .background(grayBackground)
                         .cornerRadius(20)
+                        .onChange(of: minParticipants) { _, newValue in
+                            if newValue > 100 { minParticipants = 100 }
+                            else if newValue < 1 { minParticipants = 1 }
+                            
+                            if maxParticipants < minParticipants {
+                                maxParticipants = minParticipants
+                            }
+                        }
+                        .onChange(of: maxParticipants) { _, newValue in
+                            if newValue > 100 { maxParticipants = 100 }
+                            else if newValue < minParticipants { maxParticipants = minParticipants }
+                        }
                     }
                     
                     // Goal
@@ -188,21 +235,54 @@ public struct AddHookView: View {
                 .padding(.bottom, 40)
             }
         }
+        .onAppear { prefillIfEditing() }
+    }
+    
+    // MARK: - Helpers
+    
+    private func prefillIfEditing() {
+        guard let activity = activityToEdit else { return }
+        title = activity.name
+        goal = activity.goal
+        howToPlay = activity.howToPlay
+        materials = activity.possibleProperties.filter { $0 != "-" }
+        
+        let parts = activity.participants.split(separator: "-").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        if parts.count == 2 {
+            minParticipants = parts[0]
+            maxParticipants = parts[1]
+        } else if let single = parts.first {
+            minParticipants = single
+            maxParticipants = single
+        }
     }
     
     private func saveHook() {
-        let newHook = Activity(
-            name: title,
-            participants: "\(minParticipants)-\(maxParticipants)",
-            goal: goal,
-            howToPlay: howToPlay,
-            possibleProperties: materials
-        )
-        viewModel.addActivity(newHook)
+        let participantString = minParticipants == maxParticipants ? "\(minParticipants)" : "\(minParticipants)-\(maxParticipants)"
+        if isEditMode, let original = activityToEdit {
+            original.name = title
+            original.participants = participantString
+            original.goal = goal
+            original.howToPlay = howToPlay
+            original.possibleProperties = materials
+        } else {
+            let newHook = Activity(
+                name: title,
+                participants: participantString,
+                goal: goal,
+                howToPlay: howToPlay,
+                possibleProperties: materials
+            )
+            context.insert(newHook)
+        }
         dismiss()
     }
 }
 
-#Preview {
+#Preview("Add Mode") {
     AddHookView(viewModel: HomeViewModel())
+}
+
+#Preview("Edit Mode") {
+    AddHookView(viewModel: HomeViewModel(), activityToEdit: Activity.mockActivities[0])
 }

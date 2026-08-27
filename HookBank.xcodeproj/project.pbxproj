@@ -9,19 +9,19 @@
 /* Begin PBXBuildFile section */
 		5E96F8C6303E2427002D3C01 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 5E966E52303B9756002D3C01 /* Core */; };
 		5E96F8C7303E2427002D3C01 /* Features in Frameworks */ = {isa = PBXBuildFile; productRef = 5E966E54303B9756002D3C01 /* Features */; };
-		CA95ECC9303E865A00470989 /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = CA95ECC8303E865A00470989 /* FirebaseAILogic */; };
-		CA95ECCB303E865A00470989 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = CA95ECCA303E865A00470989 /* FirebaseAppCheck */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5E9656F930344339002D3C01 /* HookBank.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookBank.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E969A14303D8754002D3C01 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		5E966E50303B9576002D3C01 /* Exceptions for "HookBank" folder in "HookBank" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				.gitignore,
+				.swiftpm/xcode/xcuserdata/cyintia1.xcuserdatad/xcschemes/xcschememanagement.plist,
+				Package.resolved,
 				Package.swift,
 			);
 			target = 5E9656F830344339002D3C01 /* HookBank */;
@@ -44,8 +44,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CA95ECCB303E865A00470989 /* FirebaseAppCheck in Frameworks */,
-				CA95ECC9303E865A00470989 /* FirebaseAILogic in Frameworks */,
 				5E96F8C7303E2427002D3C01 /* Features in Frameworks */,
 				5E96F8C6303E2427002D3C01 /* Core in Frameworks */,
 			);
@@ -74,7 +72,6 @@
 		5E966E5D303B9781002D3C01 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				5E969A14303D8754002D3C01 /* Accelerate.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -101,8 +98,6 @@
 			packageProductDependencies = (
 				5E966E52303B9756002D3C01 /* Core */,
 				5E966E54303B9756002D3C01 /* Features */,
-				CA95ECC8303E865A00470989 /* FirebaseAILogic */,
-				CA95ECCA303E865A00470989 /* FirebaseAppCheck */,
 			);
 			productName = HookBank;
 			productReference = 5E9656F930344339002D3C01 /* HookBank.app */;
@@ -134,7 +129,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				5E966E51303B9756002D3C01 /* XCLocalSwiftPackageReference "HookBank" */,
-				CA95ECC7303E865A00470989 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5E9656FA30344339002D3C01 /* Products */;
@@ -295,9 +289,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 46PB5JVBMV;
+				DEVELOPMENT_TEAM = 3JLA6T3252;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Sparkleash;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -327,9 +322,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 46PB5JVBMV;
+				DEVELOPMENT_TEAM = 3JLA6T3252;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Sparkleash;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -382,17 +378,6 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		CA95ECC7303E865A00470989 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.18.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
 		5E966E52303B9756002D3C01 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -401,16 +386,6 @@
 		5E966E54303B9756002D3C01 /* Features */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Features;
-		};
-		CA95ECC8303E865A00470989 /* FirebaseAILogic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CA95ECC7303E865A00470989 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAILogic;
-		};
-		CA95ECCA303E865A00470989 /* FirebaseAppCheck */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CA95ECC7303E865A00470989 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAppCheck;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,7 +1,10 @@
 import SwiftUI
+import SwiftData
 import Core
 
 public struct HomeView: View {
+    @Query(sort: \Activity.name) private var activities: [Activity]
+    @Environment(\.modelContext) private var context
     @State private var viewModel = HomeViewModel()
     @State private var searchText: String = ""
     @State private var showAddSheet: Bool = false
@@ -11,12 +14,9 @@ public struct HomeView: View {
     
     var filteredActivities: [Activity] {
         if searchText.isEmpty {
-            return viewModel.activities
+            return activities
         } else {
-            return viewModel.activities.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.goal.localizedCaseInsensitiveContains(searchText)
-            }
+            return NLSearchService.shared.search(query: searchText, activities: activities)
         }
     }
     
@@ -29,7 +29,7 @@ public struct HomeView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        Text("Hook Bank")
+                        Text("Sparkleash")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -37,15 +37,18 @@ public struct HomeView: View {
                             .padding(.top, 8)
                         
                         LazyVStack(alignment: .leading, spacing: 16) {
-                            Text("Newly Added")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                                .padding(.top, 8)
-                            
-                            if let firstActivity = filteredActivities.first {
-                                ActivityCard(activity: firstActivity)
-                            }
+//                            Text("Newly Added")
+//                                .font(.title2)
+//                                .fontWeight(.bold)
+//                                .foregroundColor(.black)
+//                                .padding(.top, 8)
+//                            
+//                            if let firstActivity = filteredActivities.first {
+//                                NavigationLink(destination: ActivityDetailView(activity: firstActivity, viewModel: viewModel)) {
+//                                    ActivityCard(activity: firstActivity)
+//                                }
+//                                .buttonStyle(PlainButtonStyle())
+//                            }
                         
                             Text("List Hook")
                                 .font(.title2)
@@ -54,10 +57,11 @@ public struct HomeView: View {
                                 .padding(.top, 16)
                             
                             ForEach(filteredActivities.dropFirst()) { activity in
-                                ActivityCard(activity: activity)
-                                    
+                                NavigationLink(destination: ActivityDetailView(activity: activity, viewModel: viewModel)) {
+                                    ActivityCard(activity: activity)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .onDelete(perform: viewModel.deleteActivity)
                         }
                         .padding(.horizontal, 16)
                         

@@ -1,10 +1,9 @@
 import SwiftUI
+import SwiftData
 import Core
 
 @Observable
 public final class HomeViewModel {
-    public var activities: [Activity] = Activity.mockActivities
-
     // MARK: - PDF Import state
     var isExtracting: Bool = false
     var isImporting: Bool = false
@@ -24,15 +23,7 @@ public final class HomeViewModel {
         self.llmService = llmService
     }
 
-    // MARK: - Manual activity management
 
-    public func addActivity(_ activity: Activity) {
-        activities.insert(activity, at: 0)
-    }
-
-    public func deleteActivity(at offsets: IndexSet) {
-        activities.remove(atOffsets: offsets)
-    }
 
     // MARK: - PDF Import
 
@@ -59,7 +50,7 @@ public final class HomeViewModel {
     }
 
     /// Step 2 — send extracted pages to Gemini LLM and add results to the activity list.
-    func analyzeWithAI(onComplete: @escaping () -> Void) {
+    func analyzeWithAI(context: ModelContext, onComplete: @escaping () -> Void) {
         guard !extractedPages.isEmpty else { return }
 
         isImporting = true
@@ -80,7 +71,7 @@ public final class HomeViewModel {
                 }
                 await MainActor.run {
                     for activity in newActivities.reversed() {
-                        self.activities.insert(activity, at: 0)
+                        context.insert(activity)
                     }
                     self.isImporting = false
                     self.extractedPages = []

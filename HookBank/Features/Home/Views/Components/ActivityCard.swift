@@ -6,17 +6,14 @@ struct ActivityCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(activity.name)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.black)
-            
-            
-            // Description snippet
-            Text(activity.goal)
-                .font(.system(size: 14))
-                .foregroundColor(Color("DescriptionColor"))
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
+            HStack {
+                Text(activity.name)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.black)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+            }
             
             // Participant quantity
             HStack(spacing: 4) {
@@ -27,6 +24,14 @@ struct ActivityCard: View {
             }
             .foregroundColor(Color("PrimaryAccentColor"))
             .padding(.vertical, 6)
+            
+            // Description snippet
+            Text(activity.goal)
+                .font(.system(size: 14))
+                .foregroundColor(Color("DescriptionColor"))
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
