@@ -176,9 +176,9 @@ private struct CircleButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 23, weight: .regular))
                 .foregroundColor(tint)
-                .frame(width: 36, height: 36)
+                .frame(width: 44, height: 44)
                 .background(Color.white)
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)

@@ -37,9 +37,9 @@ public struct AddHookView: View {
             HStack {
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 23, weight: .regular))
                         .foregroundColor(.black)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 44, height: 44)
                         .background(grayBackground)
                         .clipShape(Circle())
                 }
@@ -54,9 +54,9 @@ public struct AddHookView: View {
                 
                 Button(action: saveHook) {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 23, weight: .regular))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 44, height: 44)
                         .background(Color("PrimaryAccentColor"))
                         .clipShape(Circle())
                 }

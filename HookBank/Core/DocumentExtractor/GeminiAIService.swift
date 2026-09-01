@@ -11,8 +11,8 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     
     /// Candidate models in order of priority. If a model encounters token limit / quota / busy, it automatically falls back to the next one.
     public let modelCandidates: [String] = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite"
     ]
     
     private let firebaseAI: FirebaseAI

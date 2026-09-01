@@ -103,7 +103,7 @@ public class FoundationModelsService {
             3. "goal": The text after "Goal:" corrected to proper spelling.
             4. "howToPlay": The description of steps or rules explaining how to play.
             5. "property": Materials, setup rules, or configurations needed. If not found or empty, you MUST fill it with "-".
-            6. "participants": The required group or participant count (e.g. '10-20', '5+', 'Minimum 4'). Look for keywords like 'participants', 'players', 'people', or any number range. If not found, fill with "-".
+            6. "participants": The required group or participant count (e.g. '10-20'). Look for keywords like 'participants', 'players', 'people', or any number range. If not found, fill with "-".
 
             If no activities are found on this page, return an empty list.
 
