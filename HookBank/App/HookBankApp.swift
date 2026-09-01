@@ -41,7 +41,12 @@ struct HookBankApp: App {
         }
         
         #if DEBUG
-        AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+        AppCheck.setAppCheckProviderFactory(
+            AppCheckDebugProviderFactory()
+        )
+        #else
+        AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory()
+        )
         #endif
         FirebaseApp.configure()
     }
