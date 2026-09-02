@@ -23,9 +23,6 @@ struct ActivityDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
 
-                    // ── Header spacer (leaves room for the floating buttons) ──
-                    Color.clear.frame(height: 56)
-
                     // ── Title + Participants ──────────────────────────────────
                     VStack(alignment: .leading, spacing: 6) {
                         Text(activity.name)
@@ -43,6 +40,7 @@ struct ActivityDetailView: View {
                         }
                     }
                     .padding(.horizontal, 20)
+                    .padding(.top, 16)
 
                     // ── Goal Card ─────────────────────────────────────────────
                     SectionCard(
@@ -94,28 +92,27 @@ struct ActivityDetailView: View {
                     Spacer(minLength: 40)
                 }
             }
-
-            // ── Floating Header Buttons ───────────────────────────────────────
-            HStack {
-                // Back
-                CircleButton(systemImage: "chevron.left") { dismiss() }
-
-                Spacer()
-
-                // Edit
-                CircleButton(systemImage: "pencil") {
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
                     showEditSheet = true
-                }
-
-                // Delete
-                CircleButton(systemImage: "trash", tint: .red) {
-                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "pencil")
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
         }
-        .navigationBarHidden(true)
         .sheet(isPresented: $showEditSheet) {
             AddHookView(viewModel: viewModel, activityToEdit: activity)
         }
@@ -164,25 +161,6 @@ private struct SectionCard<Content: View>: View {
         .background(Color.white)
         .cornerRadius(14)
         .padding(.horizontal, 16)
-    }
-}
-
-/// Small circular button with a system image.
-private struct CircleButton: View {
-    let systemImage: String
-    var tint: Color = .black
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: 23, weight: .regular))
-                .foregroundColor(tint)
-                .frame(width: 44, height: 44)
-                .background(Color.white)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
-        }
     }
 }
 
