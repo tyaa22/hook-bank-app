@@ -11,7 +11,11 @@ public struct HomeView: View {
     @State private var searchText: String = ""
     @State private var showAddSheet: Bool = false
     @State private var selectedDraft: DraftActivity? = nil
+    @State private var selectedActivity: Activity? = nil
     @State private var showImportPDFSheet: Bool = false
+    @State private var isSelectionMode: Bool = false
+    @State private var selectedHooks: Set<UUID> = []
+
 
     /// Ids of the current search hits, ranked. `nil` means "not searching", so show everything.
     @State private var searchHits: [UUID]?
@@ -48,110 +52,206 @@ public struct HomeView: View {
                         
                         HStack(spacing: 8) {
                             Button {
-                                // Action for first button
+                                withAnimation {
+                                    isSelectionMode.toggle()
+                                    if !isSelectionMode {
+                                        selectedHooks.removeAll()
+                                    }
+                                }
                             } label: {
-                                Text("Select")
+                                Text(isSelectionMode ? "Cancel" : "Select")
                                     .font(.system(size: 15, weight: .regular))
                                     .foregroundColor(.black)
-                                    .frame(width: 44, height: 44)
-                                    .padding(.horizontal, 15)
-                                    .clipShape(Circle())
+                                    .frame(width: isSelectionMode ? 60 : 44, height: 44)
+                                    .padding(.horizontal, isSelectionMode ? 10 : 15)
+                                    .clipShape(Capsule())
                                     .glassEffect()
                             }
                             
-                            Button {
-                                // Action for second button
-                            } label: {
-                                Image(systemName: "line.3.horizontal.decrease")
-                                    .font(.system(size: 20, weight: .regular))
-                                    .foregroundColor(.black)
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(Circle())
-                                    .glassEffect()
-                            }
+                            // Filter button hidden as requested
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 8)
                     
-                    ScrollView {
-                        if activities.isEmpty && drafts.isEmpty {
-                            emptyStateView
-                        } else {
-                            VStack(spacing: 20) {
-                                LazyVStack(alignment: .leading, spacing: 16) {
-                                    // MARK: - Draft Hook Section
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
-                                            HStack(spacing: 8) {
-                                                Text("Draft Hook")
-                                                    .font(.title2)
-                                                    .fontWeight(.bold)
-                                                    .foregroundColor(.black)
-                                                
-                                                Image(systemName: "chevron.right")
-                                                    .font(.system(size: 16, weight: .semibold))
-                                                    .foregroundColor(.gray)
-                                            }
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                        .padding(.top, 8)
-                                        
-                                        // Only show Draft Hook section if there are actual drafts
-                                        if !drafts.isEmpty {
-                                            ForEach(drafts.prefix(3)) { draft in
-                                                Button {
-                                                    selectedDraft = draft
-                                                    showAddSheet = true
-                                                } label: {
-                                                    HStack {
-                                                        Text(draft.name.isEmpty ? "Untitled" : draft.name)
-                                                            .font(.body)
-                                                            .fontWeight(.medium)
-                                                            .foregroundColor(.black)
-                                                        
-                                                        Spacer()
-                                                        
-                                                        Image(systemName: "chevron.right")
-                                                            .foregroundColor(.gray)
-                                                    }
-                                                    .padding()
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 100)
-                                                            .fill(grayBackground)
-                                                    )
-                                                }
-                                                .buttonStyle(PlainButtonStyle())
-                                            }
-                                        } else {
-                                            Text("No saved drafts")
-                                                .font(.subheadline)
+                    List {
+                        // MARK: - Draft Hook Section
+                        if !isSelectionMode {
+                            HStack(spacing: 8) {
+                                Text("Draft Hook")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
+                                    EmptyView()
+                                }
+                                .opacity(0)
+                            )
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            
+                            // Only show Draft Hook section if there are actual drafts
+                            if !drafts.isEmpty {
+                                ForEach(drafts.prefix(3)) { draft in
+                                    Button {
+                                        selectedDraft = draft
+                                        showAddSheet = true
+                                    } label: {
+                                        HStack {
+                                            Text(draft.name.isEmpty ? "Untitled" : draft.name)
+                                                .font(.body)
+                                                .fontWeight(.medium)
+                                                .foregroundColor(.black)
+                                            
+                                            Spacer()
+                                            
+                                            Image(systemName: "chevron.right")
                                                 .foregroundColor(.gray)
                                                 .padding(.leading, 4)
                                         }
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 100)
+                                                .fill(grayBackground)
+                                        )
                                     }
-                                    
-                                    // MARK: - List Hook Section
-                                    if !filteredActivities.isEmpty {
-                                        Text("List Hook")
-                                            .font(.title2)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.black)
-                                            .padding(.top, 16)
-                                        
-                                        ForEach(filteredActivities) { activity in
-                                            NavigationLink(destination: ActivityDetailView(activity: activity, viewModel: viewModel)) {
-                                                ActivityCard(activity: activity)
-                                            }
-                                            .buttonStyle(PlainButtonStyle())
+                                    .buttonStyle(PlainButtonStyle())
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            context.delete(draft)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
                                         }
+                                        Button {
+                                            selectedDraft = draft
+                                            showAddSheet = true
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(.orange)
+                                    }
+                                    .contextMenu {
+                                        Button {
+                                            selectedDraft = draft
+                                            showAddSheet = true
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        Button(role: .destructive) {
+                                            context.delete(draft)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                }
+                            } else {
+                                Text("No saved drafts")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                    .padding(.leading, 4)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                        
+                        // MARK: - List Hook Section
+                        Text("List Hook")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
+                            .listRowBackground(Color.clear)
+                        
+                        ForEach(filteredActivities) { activity in
+                            if isSelectionMode {
+                                Button {
+                                    if selectedHooks.contains(activity.id) {
+                                        selectedHooks.remove(activity.id)
+                                    } else {
+                                        selectedHooks.insert(activity.id)
+                                    }
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        if selectedHooks.contains(activity.id) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(Color("PrimaryAccentColor"))
+                                                .font(.system(size: 24))
+                                        } else {
+                                            Image(systemName: "circle")
+                                                .foregroundColor(.gray)
+                                                .font(.system(size: 24))
+                                        }
+                                        
+                                        ActivityCard(activity: activity)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Color("PrimaryAccentColor"), lineWidth: selectedHooks.contains(activity.id) ? 2 : 0)
+                                            )
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                .listRowBackground(Color.clear)
+                            } else {
+                                ActivityCard(activity: activity)
+                                    .background(
+                                        NavigationLink(destination: ActivityDetailView(activity: activity, viewModel: viewModel)) {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
+                                    )
+                                .buttonStyle(PlainButtonStyle())
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 8, leading: 5, bottom: 8, trailing: 5))
+                                .listRowBackground(Color.clear)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        context.delete(activity)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button {
+                                        selectedActivity = activity
+                                        showAddSheet = true
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.orange)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        selectedActivity = activity
+                                        showAddSheet = true
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    Button(role: .destructive) {
+                                        context.delete(activity)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
                                     }
                                 }
                                 .padding(.horizontal, 16)
                             }
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .scrollDismissesKeyboard(.interactively)
                 }
             }
@@ -180,28 +280,39 @@ public struct HomeView: View {
                 ToolbarSpacer(.fixed, placement: .bottomBar)
                 
                 ToolbarItem(placement: .bottomBar) {
-                    Menu {
-                        Button {
-                            showAddSheet = true
-                        }label: {
-                            Label("Add Manually", systemImage: "pencil")
+                    if isSelectionMode {
+                        Button(role: .destructive) {
+                            deleteSelectedHooks()
+                        } label: {
+                            Label("Delete Selected (\(selectedHooks.count))", systemImage: "trash")
+                                .foregroundColor(selectedHooks.isEmpty ? .gray : .red)
                         }
-                        
-                        Button {
-                            showImportPDFSheet = true
-                        }label: {
-                            Label("Import PDF", systemImage: "doc.fill")
+                        .disabled(selectedHooks.isEmpty)
+                    } else {
+                        Menu {
+                            Button {
+                                showAddSheet = true
+                            }label: {
+                                Label("Add Manually", systemImage: "pencil")
+                            }
+                            
+                            Button {
+                                showImportPDFSheet = true
+                            }label: {
+                                Label("Import PDF", systemImage: "doc.fill")
+                            }
+                            
+                        } label: {
+                            Label("Add Hook", systemImage: "plus")
                         }
-                        
-                    } label: {
-                        Label("Add Hook", systemImage: "plus")
                     }
                 }
             }
             .sheet(isPresented: $showAddSheet, onDismiss: {
                 selectedDraft = nil
+                selectedActivity = nil
             }) {
-                AddHookView(viewModel: viewModel, draftToEdit: selectedDraft)
+                AddHookView(viewModel: viewModel, activityToEdit: selectedActivity, draftToEdit: selectedDraft)
             }
             .sheet(isPresented: $showImportPDFSheet) {
                 ImportPDFView(viewModel: viewModel)
@@ -209,6 +320,15 @@ public struct HomeView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
         }
+        
+    }
+    
+    private func deleteSelectedHooks() {
+        for activity in activities where selectedHooks.contains(activity.id) {
+            context.delete(activity)
+        }
+        selectedHooks.removeAll()
+        isSelectionMode = false
     }
     
     @ViewBuilder
@@ -230,9 +350,9 @@ public struct HomeView: View {
                 .foregroundColor(Color("DescriptionColor"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 36)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 120)
+            
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 120)
     }
 }
-

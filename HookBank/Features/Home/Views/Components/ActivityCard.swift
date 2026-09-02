@@ -11,8 +11,6 @@ struct ActivityCard: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.black)
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
             }
             
             // Participant quantity

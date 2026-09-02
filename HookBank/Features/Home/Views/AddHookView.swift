@@ -18,6 +18,7 @@ public struct AddHookView: View {
     
     @State private var materials: [String] = []
     @State private var newMaterial: String = ""
+    @FocusState private var isMaterialFieldFocused: Bool
     
     // Instructions
     @State private var howToPlay: String = ""
@@ -143,19 +144,22 @@ public struct AddHookView: View {
                             
                             HStack {
                                 TextField("Optional", text: $newMaterial)
+                                    .focused($isMaterialFieldFocused)
                                 
-                                Button(action: {
-                                    let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    if !trimmed.isEmpty && !materials.contains(trimmed) {
-                                        materials.append(trimmed)
-                                        newMaterial = ""
+                                if isMaterialFieldFocused {
+                                    Button(action: {
+                                        let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        if !trimmed.isEmpty && !materials.contains(trimmed) {
+                                            materials.append(trimmed)
+                                            newMaterial = ""
+                                        }
+                                    }) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
                                     }
-                                }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(title.isEmpty || goal.isEmpty || howToPlay.isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
+                                    .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                 }
-                                .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
                         }
                         .padding()
