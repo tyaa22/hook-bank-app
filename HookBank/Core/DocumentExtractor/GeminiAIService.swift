@@ -96,20 +96,20 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         let itemSchema = Schema.object(
             properties: [
                 "name": Schema.string(
-                    description: "Nama atau judul dari hook activity (misal: 'Icebreaker Bingo', 'Two Truths and a Lie'). Perbaiki typo atau artefak PDF jika ada."
+                    description: "Name or title of the hook activity (example: 'Icebreaker Bingu', 'Two Truths and a Lie'). Fix any typo or PDF artefact if there is any."
                 ),
                 "goal": Schema.string(
-                    description: "Goal / tujuan hook activity untuk menaikkan fokus dan keterlibatan learners sebelum sesi pembelajaran dimulai."
+                    description: "Goal or purpose of the hook activity is to increase focus and learners involvement before learning session start."
                 ),
                 "howToPlay": Schema.string(
-                    description: "Langkah-langkah instruksi yang jelas dan detail tentang How to play / cara memainkan aktivitas ini di kelas."
+                    description: "Clear and detailed step-by-step instruction on how to play this activity in the class."
                 ),
                 "property": Schema.array(
-                    items: Schema.string(description: "Nama perlengkapan / alat / bahan yang dibutuhkan"),
-                    description: "Daftar perlengkapan, alat, atau bahan yang dibutuhkan (contoh: ['Kartu Bingo', 'Spidol', 'Kertas']). Jika tidak butuh alat, berikan array kosong atau ['-']."
+                    items: Schema.string(description: "Name of required equipment, tools, or materials"),
+                    description: "List of required equipment, tools, or materials (example: ['Bingo Card', 'Marker', 'Paper']). If don't need any tools, provide an empty array or ['-']."
                 ),
                 "participant": Schema.string(
-                    description: "Jumlah atau kategori peserta / participant (contoh: '10-20 person', '4-6 person (per team)', 'Seluruh kelas'). Jika tidak ditemukan, isi dengan '-'."
+                    description: "Total participant (example: '10-20', '4-6'). If not found, fill it with '-'."
                 )
             ]
         )
@@ -118,7 +118,7 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
             properties: [
                 "activities": Schema.array(
                     items: itemSchema,
-                    description: "Daftar seluruh aktivitas hook yang berhasil diidentifikasi dari halaman dokumen."
+                    description: "List of all hook activities successfully identified from the document page."
                 )
             ]
         )
@@ -208,17 +208,24 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         )
         
         let systemPrompt = """
-        Anda adalah asisten cerdas untuk educator/guru yang bertugas mengekstrak aktivitas pemantik (Hook Activity / Icebreaker / Opening Activity) dari materi/dokumen PDF untuk meningkatkan fokus siswa/learners sebelum pembelajaran dimulai.
+        You are an intelligent assistant for educators, tasked with extracting "hook activities" (icebreakers or opening activities) from PDF materials or documents to boost student focus before the lesson begins.
         
-        Tugas Anda:
-        Analisis teks halaman PDF berikut dan ekstrak setiap hook activity yang ada menjadi format JSON terstruktur dengan parameter:
-        1. 'name': Nama/judul aktivitas. Perbaiki typo/kesalahan ekstraksi huruf ganda atau angka pengganti huruf (misal: "MMoorrnniinngg" -> "Morning").
-        2. 'goal': Tujuan aktivitas dalam meningkatkan keterlibatan, pemikiran kritis, atau fokus learners sebelum materi inti dimulai.
-        3. 'howToPlay': Instruksi langkah demi langkah cara memainkan aktivitas ini secara jelas dan runtut.
-        4. 'property': Daftar perlengkapan/alat/bahan (array of string). Jika tidak memerlukan alat, kembalikan [] atau ["-"].
-        5. 'participant': Jumlah peserta/ukuran kelompok yang disarankan (contoh: "10-20 person", "4-6 person (per team)", "Seluruh kelas"). Jika tidak disebutkan, isi dengan "-".
-        
-        Jika halaman ini tidak memuat aktivitas sama sekali, kembalikan objek JSON dengan 'activities': [].
+        Important language requirement:
+        1. The PDF may be written in English, Indonesian, or a mixture of both.
+        2. Always return the output entirely in English, regardless of the language used in the PDF.
+        3. If the source content is in Indonesian, translate the relevant activity information into clear, natural English while preserving its original meaning.
+        4. Do not include Indonesian text in the output unless it is a proper name, title, specific term, or other text that should reasonably remain unchanged.
+        5. Do not invent or add information that is not present or reasonably implied by the source.
+                
+        Your task:
+        Analyze the text from the provided PDF page and extract any hook activities into a structured JSON format using the following parameters:
+        1. 'name': The name or title of the activity. Correct any typos or extraction errors, such as repeated characters or numbers replacing letters (e.g., "MMoorrnniinngg" -> "Morning").
+        2. 'goal': The purpose of the activity in terms of enhancing learner engagement, critical thinking, or focus before the core material begins.
+        3. 'howToPlay': Clear, sequential, step-by-step instructions on how to conduct the activity.
+        4. 'property': A list of required equipment, tools, or materials (array of strings). If no tools are needed, return [] or ["-"].
+        5. 'participant': The recommended number of participants or group size (e.g., "10-20 people", "4-6 people (per team)", "Entire class"). If not specified, use "-".
+                
+        If the page contains no activities, return a JSON object with 'activities': [].
         """
         
         let generativeModel = firebaseAI.generativeModel(
@@ -227,7 +234,7 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
             systemInstruction: ModelContent(role: "system", parts: [systemPrompt])
         )
         
-        let prompt = "Halaman PDF yang diekstrak:\n\n\(pageText)"
+        let prompt = "Extracted PDF Page:\n\n\(pageText)"
         
         let response = try await generativeModel.generateContent(prompt)
         
