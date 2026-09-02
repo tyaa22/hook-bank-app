@@ -12,16 +12,19 @@ public struct HomeView: View {
     @State private var showAddSheet: Bool = false
     @State private var selectedDraft: DraftActivity? = nil
     @State private var showImportPDFSheet: Bool = false
+
+    /// Ids of the current search hits, ranked. `nil` means "not searching", so show everything.
+    @State private var searchHits: [UUID]?
+
     let grayBackground = Color("CardBackgroundColor")
-    
+
     public init() {}
-    
+
+    /// Resolved against the live `@Query` result, so deleted hooks drop out on their own.
     var filteredActivities: [Activity] {
-        if searchText.isEmpty {
-            return activities
-        } else {
-            return NLSearchService.shared.search(query: searchText, activities: activities)
-        }
+        guard let searchHits else { return activities }
+        let byID = Dictionary(activities.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return searchHits.compactMap { byID[$0] }
     }
     
     public var body: some View {
@@ -154,6 +157,23 @@ public struct HomeView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .searchable(text: $searchText, prompt: "Search")
+            .task(id: searchText) {
+                let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !query.isEmpty else {
+                    searchHits = nil
+                    return
+                }
+
+                // Debounce. `.task(id:)` cancels this task the moment searchText changes again,
+                // so a fast typist only pays for the keystroke they stop on.
+                try? await Task.sleep(for: .milliseconds(250))
+                guard !Task.isCancelled else { return }
+
+                let candidates = activities.map(NLSearchService.Candidate.init)
+                let ranked = await NLSearchService.shared.rank(query: query, candidates: candidates)
+                guard !Task.isCancelled else { return }
+                searchHits = ranked
+            }
             .toolbar {
                 DefaultToolbarItem(kind: .search, placement: .bottomBar)
                 
