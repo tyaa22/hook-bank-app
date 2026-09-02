@@ -73,92 +73,80 @@ public struct HomeView: View {
                     .padding(.bottom, 8)
                     
                     ScrollView {
-                        VStack(spacing: 20) {
-                            LazyVStack(alignment: .leading, spacing: 16) {
-                                //                            Text("Newly Added")
-                                //                                .font(.title2)
-                                //                                .fontWeight(.bold)
-                                //                                .foregroundColor(.black)
-                                //                                .padding(.top, 8)
-                                //
-                                //                            if let firstActivity = filteredActivities.first {
-                                //                                NavigationLink(destination: ActivityDetailView(activity: firstActivity, viewModel: viewModel)) {
-                                //                                    ActivityCard(activity: firstActivity)
-                                //                                }
-                                //                                .buttonStyle(PlainButtonStyle())
-                                //                            }
-                                
-                                // MARK: - Draft Hook Section
-                                VStack(alignment: .leading, spacing: 12) {
-                                    NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
-                                        HStack(spacing: 8) {
-                                            Text("Draft Hook")
-                                                .font(.title2)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.black)
-                                            
-                                            Image(systemName: "chevron.right")
-                                                .font(.system(size: 16, weight: .semibold))
+                        if activities.isEmpty && drafts.isEmpty {
+                            emptyStateView
+                        } else {
+                            VStack(spacing: 20) {
+                                LazyVStack(alignment: .leading, spacing: 16) {
+                                    // MARK: - Draft Hook Section
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
+                                            HStack(spacing: 8) {
+                                                Text("Draft Hook")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(.black)
+                                                
+                                                Image(systemName: "chevron.right")
+                                                    .font(.system(size: 16, weight: .semibold))
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                        .padding(.top, 8)
+                                        
+                                        // Only show Draft Hook section if there are actual drafts
+                                        if !drafts.isEmpty {
+                                            ForEach(drafts.prefix(3)) { draft in
+                                                Button {
+                                                    selectedDraft = draft
+                                                    showAddSheet = true
+                                                } label: {
+                                                    HStack {
+                                                        Text(draft.name.isEmpty ? "Untitled" : draft.name)
+                                                            .font(.body)
+                                                            .fontWeight(.medium)
+                                                            .foregroundColor(.black)
+                                                        
+                                                        Spacer()
+                                                        
+                                                        Image(systemName: "chevron.right")
+                                                            .foregroundColor(.gray)
+                                                    }
+                                                    .padding()
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 100)
+                                                            .fill(grayBackground)
+                                                    )
+                                                }
+                                                .buttonStyle(PlainButtonStyle())
+                                            }
+                                        } else {
+                                            Text("No saved drafts")
+                                                .font(.subheadline)
                                                 .foregroundColor(.gray)
+                                                .padding(.leading, 4)
                                         }
                                     }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .padding(.top, 8)
                                     
-                                    // Only show Draft Hook section if there are actual drafts
-                                    if !drafts.isEmpty {
-                                        // To change the maximum number of drafts shown on this screen,
-                                        // change the number inside `prefix(...)` (e.g., `.prefix(2)`)
-                                        ForEach(drafts.prefix(3)) { draft in
-                                            Button {
-                                                selectedDraft = draft
-                                                showAddSheet = true
-                                            } label: {
-                                                HStack {
-                                                    Text(draft.name.isEmpty ? "Untitled" : draft.name)
-                                                        .font(.body)
-                                                        .fontWeight(.medium)
-                                                        .foregroundColor(.black)
-                                                    
-                                                    Spacer()
-                                                    
-                                                    Image(systemName: "chevron.right")
-                                                        .foregroundColor(.gray)
-                                                }
-                                                .padding()
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 100)
-                                                        .fill(grayBackground)
-                                                )
+                                    // MARK: - List Hook Section
+                                    if !filteredActivities.isEmpty {
+                                        Text("List Hook")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.black)
+                                            .padding(.top, 16)
+                                        
+                                        ForEach(filteredActivities) { activity in
+                                            NavigationLink(destination: ActivityDetailView(activity: activity, viewModel: viewModel)) {
+                                                ActivityCard(activity: activity)
                                             }
                                             .buttonStyle(PlainButtonStyle())
                                         }
-                                    } else {
-                                        // Placeholder so the user can still access the Add Hook sheet easily if they want to
-                                        // Or you can completely hide the Drafts section if there are none. For now we will hide the cards.
-                                        Text("No saved drafts")
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .padding(.leading, 4)
                                     }
                                 }
-                                
-                                // MARK: - List Hook Section
-                                Text("List Hook")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.black)
-                                    .padding(.top, 16)
-                                
-                                ForEach(filteredActivities) { activity in
-                                    NavigationLink(destination: ActivityDetailView(activity: activity, viewModel: viewModel)) {
-                                        ActivityCard(activity: activity)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
+                                .padding(.horizontal, 16)
                             }
-                            .padding(.horizontal, 16)
-                            
                         }
                     }
                     .scrollDismissesKeyboard(.interactively)
@@ -202,8 +190,29 @@ public struct HomeView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
     }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image("home_logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 200, height: 200)
+                .padding(.bottom, 8)
+            
+            Text("No Entries")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+            
+            Text("To add an entry, tap the plus button")
+                .font(.subheadline)
+                .foregroundColor(Color("DescriptionColor"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 36)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 120)
+    }
 }
 
-#Preview {
-    HomeView()
-}
