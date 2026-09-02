@@ -34,39 +34,7 @@ public struct AddHookView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Custom Header
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 23, weight: .regular))
-                        .foregroundColor(.black)
-                        .frame(width: 44, height: 44)
-                        .background(grayBackground)
-                        .clipShape(Circle())
-                }
-                
-                Spacer()
-                
-                Text(headerTitle)
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button(action: saveHook) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 23, weight: .regular))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(title.isEmpty || goal.isEmpty || howToPlay.isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
-                        .clipShape(Circle())
-                }
-                // Disable save if required fields are empty
-                .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
-            }
-            .padding()
-            
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     
@@ -97,10 +65,8 @@ public struct AddHookView: View {
                                     .keyboardType(.numberPad)
                                     .multilineTextAlignment(.trailing)
                                     .fontWeight(.semibold)
-//                                    .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-//                                    .background(Color.white)
                                     .cornerRadius(8)
                             }
                             .padding()
@@ -115,10 +81,8 @@ public struct AddHookView: View {
                                     .keyboardType(.numberPad)
                                     .multilineTextAlignment(.trailing)
                                     .fontWeight(.semibold)
-//                                    .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-//                                    .background(Color.white)
                                     .cornerRadius(8)
                             }
                             .padding()
@@ -214,9 +178,27 @@ public struct AddHookView: View {
                     
                 }
                 .padding(.horizontal)
+                .padding(.top, 8)
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
+            .navigationTitle(headerTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(isEditMode ? "Save" : "Add") {
+                        saveHook()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
+                }
+            }
         }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
