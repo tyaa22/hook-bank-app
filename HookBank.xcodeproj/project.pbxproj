@@ -6,23 +6,45 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5E96F8C6303E2427002D3C01 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 5E966E52303B9756002D3C01 /* Core */; };
+		5E96F8C7303E2427002D3C01 /* Features in Frameworks */ = {isa = PBXBuildFile; productRef = 5E966E54303B9756002D3C01 /* Features */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		5E9656F930344339002D3C01 /* HookBank.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HookBank.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5E966E50303B9576002D3C01 /* Exceptions for "HookBank" folder in "HookBank" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				.gitignore,
+				Package.resolved,
+				Package.swift,
+			);
+			target = 5E9656F830344339002D3C01 /* HookBank */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5E9656FB30344339002D3C01 /* HookBank */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5E966E50303B9576002D3C01 /* Exceptions for "HookBank" folder in "HookBank" target */,
+			);
 			path = HookBank;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5E9656F630344339002D3C01 /* Frameworks */ = {
+		5E96F8C3303E23AA002D3C01 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E96F8C7303E2427002D3C01 /* Features in Frameworks */,
+				5E96F8C6303E2427002D3C01 /* Core in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				5E9656FB30344339002D3C01 /* HookBank */,
+				5E966E5D303B9781002D3C01 /* Frameworks */,
 				5E9656FA30344339002D3C01 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,6 +68,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		5E966E5D303B9781002D3C01 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -53,8 +83,8 @@
 			buildConfigurationList = 5E9657043034433A002D3C01 /* Build configuration list for PBXNativeTarget "HookBank" */;
 			buildPhases = (
 				5E9656F530344339002D3C01 /* Sources */,
-				5E9656F630344339002D3C01 /* Frameworks */,
-				5E9656F730344339002D3C01 /* Resources */,
+				5E96F8C3303E23AA002D3C01 /* Frameworks */,
+				5E96F8C4303E23BF002D3C01 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -65,6 +95,8 @@
 			);
 			name = HookBank;
 			packageProductDependencies = (
+				5E966E52303B9756002D3C01 /* Core */,
+				5E966E54303B9756002D3C01 /* Features */,
 			);
 			productName = HookBank;
 			productReference = 5E9656F930344339002D3C01 /* HookBank.app */;
@@ -94,6 +126,9 @@
 			);
 			mainGroup = 5E9656F030344339002D3C01;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5E966E51303B9756002D3C01 /* XCLocalSwiftPackageReference "HookBank" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5E9656FA30344339002D3C01 /* Products */;
 			projectDirPath = "";
@@ -105,7 +140,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		5E9656F730344339002D3C01 /* Resources */ = {
+		5E96F8C4303E23BF002D3C01 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -251,11 +286,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3JLA6T3252;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Sparkleash;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -266,7 +303,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.academy.cyintia.HookBank;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingkaran.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -283,11 +320,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HookBank/HookBank.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3JLA6T3252;
+				DEVELOPMENT_TEAM = 46PB5JVBMV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Sparkleash;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -298,7 +337,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.academy.cyintia.HookBank;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingkaran.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -332,6 +371,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5E966E51303B9756002D3C01 /* XCLocalSwiftPackageReference "HookBank" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = HookBank;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5E966E52303B9756002D3C01 /* Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Core;
+		};
+		5E966E54303B9756002D3C01 /* Features */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Features;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5E9656F130344339002D3C01 /* Project object */;
 }

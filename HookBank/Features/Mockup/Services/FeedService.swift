@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 final class FeedService: FeedServiceProtocol {
     func fetchPosts() async throws -> [Post] {
