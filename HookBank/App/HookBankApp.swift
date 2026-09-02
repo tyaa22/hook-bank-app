@@ -18,7 +18,7 @@ struct HookBankApp: App {
     
     /// Persistent SwiftData container — activities survive app restarts.
     let container: ModelContainer = {
-        let schema = Schema([Activity.self])
+        let schema = Schema([Activity.self, DraftActivity.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: [config])
