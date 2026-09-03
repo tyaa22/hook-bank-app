@@ -52,6 +52,7 @@ public struct DraftsListView: View {
                                         .fill(grayBackground)
                                 )
                             }
+                            .accessibilityLabel(Text("\(draft.name), draft"))
                             .buttonStyle(PlainButtonStyle())
                         }
                     }

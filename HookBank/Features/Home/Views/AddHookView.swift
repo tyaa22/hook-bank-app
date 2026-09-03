@@ -43,11 +43,13 @@ public struct AddHookView: View {
                         Text("Title")
                             .font(.subheadline)
                             .fontWeight(.bold)
+                            .accessibilityHidden(true)
                         
                         TextField("Required", text: $title)
                             .padding()
                             .background(grayBackground)
                             .cornerRadius(20)
+                            .accessibilityLabel("Title")
                     }
                     
                     // Participant
@@ -55,11 +57,13 @@ public struct AddHookView: View {
                         Text("Participant")
                             .font(.subheadline)
                             .fontWeight(.bold)
+                            .accessibilityHidden(true)
                         
                         VStack(spacing: 0) {
                             HStack {
                                 Text("Minimum")
                                     .foregroundColor(Color(white: 0.7))
+                                    .accessibilityHidden(true)
                                 Spacer()
                                 TextField("", value: $minParticipants, format: .number)
                                     .keyboardType(.numberPad)
@@ -68,6 +72,8 @@ public struct AddHookView: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .cornerRadius(8)
+                                    .accessibilityLabel("Minimum participant")
+                                    .accessibilityValue("\(minParticipants)")
                             }
                             .padding()
                             
@@ -76,6 +82,7 @@ public struct AddHookView: View {
                             HStack {
                                 Text("Maximum")
                                     .foregroundColor(Color(white: 0.7))
+                                    .accessibilityHidden(true)
                                 Spacer()
                                 TextField("", value: $maxParticipants, format: .number)
                                     .keyboardType(.numberPad)
@@ -84,6 +91,8 @@ public struct AddHookView: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .cornerRadius(8)
+                                    .accessibilityLabel("Maximum participant")
+                                    .accessibilityValue("\(maxParticipants)")
                             }
                             .padding()
                         }
@@ -108,12 +117,14 @@ public struct AddHookView: View {
                         Text("Goal")
                             .font(.subheadline)
                             .fontWeight(.bold)
+                            .accessibilityHidden(true)
                         
                         TextField("Required", text: $goal, axis: .vertical)
                             .lineLimit(4...8)
                             .padding()
                             .background(grayBackground)
                             .cornerRadius(20)
+                            .accessibilityLabel("Goal")
                     }
                     
                     // Material
@@ -121,6 +132,7 @@ public struct AddHookView: View {
                         Text("Material")
                             .font(.subheadline)
                             .fontWeight(.bold)
+                            .accessibilityHidden(true)
                         
                         VStack(alignment: .leading, spacing: 12) {
                             if !materials.isEmpty {
@@ -135,6 +147,7 @@ public struct AddHookView: View {
                                                 Image(systemName: "minus.circle.fill")
                                                     .foregroundColor(.red)
                                             }
+                                            .accessibilityLabel("Remove \(material)")
                                         }
                                     }
                                 }
@@ -143,6 +156,7 @@ public struct AddHookView: View {
                             
                             HStack {
                                 TextField("Optional", text: $newMaterial)
+                                    .accessibilityLabel("Material")
                                 
                                 Button(action: {
                                     let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -155,6 +169,7 @@ public struct AddHookView: View {
                                         .font(.system(size: 24))
                                         .foregroundColor(title.isEmpty || goal.isEmpty || howToPlay.isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
                                 }
+                                .accessibilityLabel("Add material")
                                 .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
                         }
@@ -168,12 +183,14 @@ public struct AddHookView: View {
                         Text("How to Play")
                             .font(.subheadline)
                             .fontWeight(.bold)
+                            .accessibilityHidden(true)
                         
                         TextField("Required", text: $howToPlay, axis: .vertical)
                             .lineLimit(6...12)
                             .padding()
                             .background(grayBackground)
                             .cornerRadius(20)
+                            .accessibilityLabel("Instruction")
                     }
                     
                 }

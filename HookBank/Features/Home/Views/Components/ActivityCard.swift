@@ -33,6 +33,8 @@ struct ActivityCard: View {
                 .multilineTextAlignment(.leading)
             
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("\(activity.name), \(activity.participants) people, \(activity.goal)"))
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, alignment: .leading)

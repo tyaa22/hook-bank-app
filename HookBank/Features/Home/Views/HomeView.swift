@@ -91,6 +91,8 @@ public struct HomeView: View {
                                                     .font(.system(size: 16, weight: .semibold))
                                                     .foregroundColor(.gray)
                                             }
+                                            .accessibilityElement(children: .combine)
+                                            .accessibilityLabel(Text("Draft Hook, Heading"))
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                         .padding(.top, 8)
@@ -119,6 +121,7 @@ public struct HomeView: View {
                                                             .fill(grayBackground)
                                                     )
                                                 }
+                                                .accessibilityLabel(Text("\(draft.name), draft"))
                                                 .buttonStyle(PlainButtonStyle())
                                             }
                                         } else {
@@ -132,6 +135,7 @@ public struct HomeView: View {
                                     // MARK: - List Hook Section
                                     if !filteredActivities.isEmpty {
                                         Text("List Hook")
+                                            .accessibilityLabel(Text("List Hook, Heading"))
                                             .font(.title2)
                                             .fontWeight(.bold)
                                             .foregroundColor(.black)
@@ -211,6 +215,8 @@ public struct HomeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 36)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("No Entries, To add an entry, tap the plus button"))
         .frame(maxWidth: .infinity)
         .padding(.top, 120)
     }
