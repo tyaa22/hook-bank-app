@@ -95,7 +95,7 @@ public struct DraftsListView: View {
         .sheet(isPresented: $showAddSheet, onDismiss: {
             selectedDraft = nil
         }) {
-            AddHookView(viewModel: viewModel, draftToEdit: selectedDraft)
+            AddIcebreakerView(viewModel: viewModel, draftToEdit: selectedDraft)
         }
     }
 }

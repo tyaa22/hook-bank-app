@@ -14,7 +14,7 @@ public struct HomeView: View {
     @State private var selectedActivity: Activity? = nil
     @State private var showImportPDFSheet: Bool = false
     @State private var isSelectionMode: Bool = false
-    @State private var selectedHooks: Set<UUID> = []
+    @State private var selectedIcebreakers: Set<UUID> = []
     @State private var showDeleteConfirm : Bool = false
     
     @State private var isSearchActive: Bool = false
@@ -23,7 +23,7 @@ public struct HomeView: View {
     
     public init() {}
     
-    /// Resolved against the live `@Query` result, so deleted hooks drop out on their own.
+    /// Resolved against the live `@Query` result, so deleted Icebreakers drop out on their own.
     var filteredActivities: [Activity] {
         if searchText.isEmpty {
             return activities
@@ -60,7 +60,7 @@ public struct HomeView: View {
                                     withAnimation {
                                         isSelectionMode.toggle()
                                         if !isSelectionMode {
-                                            selectedHooks.removeAll()
+                                            selectedIcebreakers.removeAll()
                                         }
                                     }
                                 } label: {
@@ -81,31 +81,30 @@ public struct HomeView: View {
                         .padding(.bottom, 8)
                         
                         List {
-                            // MARK: - Draft Hook Section
-                            if !isSelectionMode && !isSearchActive {
-                                HStack(spacing: 8) {
-                                    Text("Draft Hook")
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.black)
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.gray)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(
-                                    NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
-                                        EmptyView()
-                                    }
-                                        .opacity(0)
-                                )
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
-                                .listRowBackground(Color.clear)
-                                
-                                // Only show Draft Hook section if there are actual drafts
+                            // MARK: - Draft Icebreaker Section
+                                // Only show Draft Icebreaker section if there are actual drafts
                                 if !drafts.isEmpty {
+                                    if !isSelectionMode && !isSearchActive {
+                                        HStack(spacing: 8) {
+                                            Text("Draft Icebreaker")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.black)
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundColor(.gray)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(
+                                            NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
+                                                EmptyView()
+                                            }
+                                                .opacity(0)
+                                        )
+                                        .listRowSeparator(.hidden)
+                                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
+                                        .listRowBackground(Color.clear)
                                     ForEach(drafts.prefix(3)) { draft in
                                         Button {
                                             selectedDraft = draft
@@ -161,19 +160,20 @@ public struct HomeView: View {
                                             }
                                         }
                                     }
-                                } else {
-                                    Text("No saved drafts")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                        .padding(.leading, 4)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                                        .listRowBackground(Color.clear)
                                 }
+//                                    else {
+//                                    Text("No saved drafts")
+//                                        .font(.subheadline)
+//                                        .foregroundColor(.gray)
+//                                        .padding(.leading, 4)
+//                                        .listRowSeparator(.hidden)
+//                                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+//                                        .listRowBackground(Color.clear)
+//                                }
                             }
                             
-                            // MARK: - List Hook Section
-                            Text("List Hook")
+                            // MARK: - List Icebreaker Section
+                            Text("List Icebreaker")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
@@ -184,14 +184,14 @@ public struct HomeView: View {
                             ForEach(filteredActivities) { activity in
                                 if isSelectionMode {
                                     Button {
-                                        if selectedHooks.contains(activity.id) {
-                                            selectedHooks.remove(activity.id)
+                                        if selectedIcebreakers.contains(activity.id) {
+                                            selectedIcebreakers.remove(activity.id)
                                         } else {
-                                            selectedHooks.insert(activity.id)
+                                            selectedIcebreakers.insert(activity.id)
                                         }
                                     } label: {
                                         HStack(spacing: 12) {
-                                            if selectedHooks.contains(activity.id) {
+                                            if selectedIcebreakers.contains(activity.id) {
                                                 Image(systemName: "checkmark.circle.fill")
                                                     .foregroundColor(Color("PrimaryAccentColor"))
                                                     .font(.system(size: 24))
@@ -204,7 +204,7 @@ public struct HomeView: View {
                                             ActivityCard(activity: activity)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: selectedHooks.contains(activity.id) ? 2 : 0)
+                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: selectedIcebreakers.contains(activity.id) ? 2 : 0)
                                                 )
                                         }
                                     }
@@ -281,9 +281,9 @@ public struct HomeView: View {
                                 .padding(.horizontal, 15)
                                 .padding(.vertical, 8)
                         }
-                        .disabled(selectedHooks.isEmpty)
+                        .disabled(selectedIcebreakers.isEmpty)
                         .confirmationDialog(
-                            selectedHooks.count > 1 ? "Delete \(selectedHooks.count) Hooks?" : "Delete Hook?",
+                            selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
                             isPresented: $showDeleteConfirm,
                             titleVisibility: .visible
                         ) {
@@ -291,35 +291,13 @@ public struct HomeView: View {
                                 showDeleteConfirm.toggle()
                             }
                             Button("Delete", role: .destructive) {
-                                deleteSelectedHooks()
+                                deleteSelectedIcebreakers()
                             }
                         } message: {
                             Text("This action cannot be undone.")
                         }
                     } else {
-                        Menu {
-                            Button {
-                                showAddSheet = true
-                            }label: {
-                                Label("Add Manually", systemImage: "pencil")
-                            }
-                            
-                            Button {
-                                showImportPDFSheet = true
-                            }label: {
-                                Label("Import PDF", systemImage: "doc.fill")
-                            }
-                            
-                        } label: {
-                            Label("Add Hook", systemImage: "plus")
-                                .font(.system(size: 15, weight: .regular))
-                                .foregroundColor(.blue)
-                                .padding(.horizontal, 15)
-                                .padding(.vertical, 8)
-                                .background(Color("PrimaryAccentColor"))
-                                .clipShape(Capsule())
-                                .glassEffect()
-                        }
+                        addIcebreakerMenu
                     }
                 }
             }
@@ -327,21 +305,46 @@ public struct HomeView: View {
                 selectedDraft = nil
                 selectedActivity = nil
             }) {
-                AddHookView(viewModel: viewModel, activityToEdit: selectedActivity, draftToEdit: selectedDraft)
+                AddIcebreakerView(viewModel: viewModel, activityToEdit: selectedActivity, draftToEdit: selectedDraft)
             }
             .sheet(isPresented: $showImportPDFSheet) {
                 ImportPDFView(viewModel: viewModel)
                     .presentationDetents([.medium])
             }
+            .toolbarBackground(.clear, for: .bottomBar)
         }
         
     }
     
-    private func deleteSelectedHooks() {
-        for activity in activities where selectedHooks.contains(activity.id) {
+    private var addIcebreakerMenu: some View {
+        Menu {
+            Button {
+                showAddSheet = true
+            } label: {
+                Label("Add Manually", systemImage: "pencil")
+            }
+            
+            Button {
+                showImportPDFSheet = true
+            } label: {
+                Label("Import PDF", systemImage: "doc.fill")
+            }
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.black)
+                .frame(width: 35, height: 35)
+//                .background(Color("PrimaryAccentColor"), in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func deleteSelectedIcebreakers() {
+        for activity in activities where selectedIcebreakers.contains(activity.id) {
             context.delete(activity)
         }
-        selectedHooks.removeAll()
+        selectedIcebreakers.removeAll()
         isSelectionMode = false
     }
     @ViewBuilder
@@ -371,20 +374,15 @@ public struct HomeView: View {
 }
 
 #Preview {
-    HomeView()
+    let container = try! ModelContainer(
+        for: Activity.self, DraftActivity.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    for activity in Activity.mockActivities {
+        container.mainContext.insert(activity)
+    }
+    container.mainContext.insert(DraftActivity(name: "Untitled Draft"))
+
+    return HomeView()
+        .modelContainer(container)
 }
-//
-//extension View {
-//    @ViewBuilder
-//    func conditionalSearchable(isActive: Bool, text: Binding<String>, isPresented: Binding<Bool>, prompt: String) -> some View {
-//        if isActive {
-//            self.searchable(text: text, isPresented: isPresented, prompt: prompt)
-//        } else {
-//            self
-//        }
-//    }
-//    container.mainContext.insert(DraftActivity(name: "Untitled Draft"))
-//
-//    return HomeView()
-//        .modelContainer(container)
-//}

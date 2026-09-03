@@ -114,23 +114,23 @@ struct ActivityDetailView: View {
             }
         }
         .sheet(isPresented: $showEditSheet) {
-            AddHookView(viewModel: viewModel, activityToEdit: activity)
+            AddIcebreakerView(viewModel: viewModel, activityToEdit: activity)
         }
         .confirmationDialog(
-            "Delete Hook",
+            "Delete Icebreaker",
             isPresented: $showDeleteConfirm,
             titleVisibility: .visible
         ) {
-            Button("Keep Hook") {
+            Button("Keep") {
                 showDeleteConfirm.toggle()
             }
-            Button("Delete Hook", role: .destructive) {
+            Button("Delete", role: .destructive) {
                 context.delete(activity)
                 onDelete?()
                 dismiss()
             }
         } message: {
-            Text("Are you sure you want to delete this hook? \nThis action cannot be undone.")
+            Text("Are you sure you want to delete this icebreaker? \nThis action cannot be undone.")
         }
     }
 }

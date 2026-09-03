@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import Core
 
-public struct AddHookView: View {
+public struct AddIcebreakerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     var viewModel: HomeViewModel
@@ -25,7 +25,7 @@ public struct AddHookView: View {
     
     let grayBackground = Color("CardBackgroundColor")
     private var isEditMode: Bool { activityToEdit != nil }
-    private var headerTitle: String { isEditMode ? "Edit Hook" : "Add Hook" }
+    private var headerTitle: String { isEditMode ? "Edit Icebreaker" : "Add Icebreaker" }
     
     public init(viewModel: HomeViewModel, activityToEdit: Activity? = nil, draftToEdit: DraftActivity? = nil) {
         self.viewModel = viewModel
@@ -94,7 +94,7 @@ public struct AddHookView: View {
     }
     
     private func autoSaveDraft() {
-        // Only auto-save if we are not editing an existing hook
+        // Only auto-save if we are not editing an existing icebreaker
         guard !isEditMode else { return }
         // Do not auto-save if all fields are empty
         guard !title.isEmpty || !goal.isEmpty || !howToPlay.isEmpty || !materials.isEmpty else { return }
@@ -121,7 +121,7 @@ public struct AddHookView: View {
         }
     }
     
-    private func saveHook() {
+    private func saveIcebreaker() {
         let participantString = minParticipants == maxParticipants ? "\(minParticipants)" : "\(minParticipants)-\(maxParticipants)"
         if isEditMode, let original = activityToEdit {
             original.name = title
@@ -130,14 +130,14 @@ public struct AddHookView: View {
             original.howToPlay = howToPlay
             original.possibleProperties = materials
         } else {
-            let newHook = Activity(
+            let newIcebreaker = Activity(
                 name: title,
                 participants: participantString,
                 goal: goal,
                 howToPlay: howToPlay,
                 possibleProperties: materials
             )
-            context.insert(newHook)
+            context.insert(newIcebreaker)
             
             // Clean up the draft if it was saved
             if let draft = draftToEdit {
@@ -320,7 +320,7 @@ public struct AddHookView: View {
         }
         
         ToolbarItem(placement: .confirmationAction) {
-            Button(action: saveHook) {
+            Button(action: saveIcebreaker) {
                 Image(systemName: "checkmark")
                     .font(.system(size: 18, weight: .regular))
             }
@@ -334,9 +334,9 @@ public struct AddHookView: View {
 }
 
 #Preview("Add Mode") {
-    AddHookView(viewModel: HomeViewModel())
+    AddIcebreakerView(viewModel: HomeViewModel())
 }
 
 #Preview("Edit Mode") {
-    AddHookView(viewModel: HomeViewModel(), activityToEdit: Activity.mockActivities[0])
+    AddIcebreakerView(viewModel: HomeViewModel(), activityToEdit: Activity.mockActivities[0])
 }
