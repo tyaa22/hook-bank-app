@@ -97,6 +97,11 @@ public struct ImportPDFView: View {
                 showFilePicker = true
             }
         }
+        .onDisappear {
+            // Fires however the sheet closes — the X button, swipe-to-dismiss, or otherwise —
+            // so a Gemini extraction in progress doesn't keep running after this view is gone.
+            viewModel.cancelAnalysis()
+        }
     }
 
     // MARK: - Content Area

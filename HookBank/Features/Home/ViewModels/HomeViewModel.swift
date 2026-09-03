@@ -15,6 +15,11 @@ public final class HomeViewModel {
     private let extractor: DocumentTextExtracting
     private let llmService: LLMActivityExtracting
 
+    /// Handle to the in-flight Gemini extraction, so it can be stopped if the user closes the
+    /// import sheet before it finishes — otherwise it's an unstructured `Task`, unrelated to any
+    /// view's lifetime, and keeps running (and can still insert results) after the sheet is gone.
+    private var analyzeTask: Task<Void, Never>?
+
     public init(
         extractor: DocumentTextExtracting = PDFTextExtractor(),
         llmService: LLMActivityExtracting = GeminiAIService.shared
@@ -58,7 +63,7 @@ public final class HomeViewModel {
         currentPageImporting = 0
         totalPagesImporting = extractedPages.count
 
-        Task {
+        analyzeTask = Task {
             do {
                 let newActivities = try await llmService.extractActivities(
                     from: extractedPages
@@ -69,6 +74,12 @@ public final class HomeViewModel {
                         self.totalPagesImporting = total
                     }
                 }
+
+                // The sheet may have been closed (cancelling this task) while a page's network
+                // call was already in flight and finished anyway — don't insert results from a
+                // run the user asked to stop.
+                guard !Task.isCancelled else { return }
+
                 await MainActor.run {
                     for activity in newActivities.reversed() {
                         context.insert(activity)
@@ -77,6 +88,9 @@ public final class HomeViewModel {
                     self.extractedPages = []
                     onComplete()
                 }
+            } catch is CancellationError {
+                // Expected when the sheet is closed mid-analysis; cancelAnalysis() already reset
+                // isImporting, so there's nothing to surface as an error here.
             } catch {
                 await MainActor.run {
                     self.importError = error.localizedDescription
@@ -84,6 +98,18 @@ public final class HomeViewModel {
                 }
             }
         }
+    }
+
+    /// Stops any in-flight Gemini extraction. Safe to call even when nothing is running.
+    ///
+    /// Cancelling `analyzeTask` alone only sets a flag — `extractActivities` has to actually check
+    /// it to stop making further Gemini requests, which it does. Requests already in flight when
+    /// this is called may still complete on the server; this only guarantees their results won't
+    /// be used (see the `Task.isCancelled` check above) and that no further pages are requested.
+    func cancelAnalysis() {
+        analyzeTask?.cancel()
+        analyzeTask = nil
+        isImporting = false
     }
 }
 

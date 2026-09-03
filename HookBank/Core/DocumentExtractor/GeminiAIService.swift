@@ -199,6 +199,14 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
                     print("⚠️ [GeminiAIService] Failed extracting page \(pageNumber): \(error.localizedDescription)")
                 }
 
+                // The caller (e.g. the import sheet being closed) cancelled us: stop requesting
+                // pages that haven't started yet, and cancel whatever's still in flight rather
+                // than waiting out its full network round-trip before this function can return.
+                if Task.isCancelled {
+                    group.cancelAll()
+                    break
+                }
+
                 startNextTask()
             }
         }
@@ -232,8 +240,12 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         pageText: String,
         pageNumber: Int
     ) async throws -> [ExtractedActivityData] {
+        // A task queued behind `maxConcurrentPages` others can sit waiting long enough for the
+        // caller to cancel before it ever starts — this stops it before it makes a network call.
+        try Task.checkCancellation()
+
         var lastError: Error?
-        
+
         for (idx, modelName) in modelCandidates.enumerated() {
             do {
                 print("🤖 [GeminiAIService] Trying model '\(modelName)' on page \(pageNumber)...")
