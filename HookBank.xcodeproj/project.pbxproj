@@ -19,7 +19,9 @@
 		5E966E50303B9576002D3C01 /* Exceptions for "HookBank" folder in "HookBank" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				.build,
 				.gitignore,
+				DerivedData,
 				Package.resolved,
 				Package.swift,
 			);
@@ -289,7 +291,7 @@
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3JLA6T3252;
+				DEVELOPMENT_TEAM = P2M3NVD8UX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sparkleash;

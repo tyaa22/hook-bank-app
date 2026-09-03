@@ -120,9 +120,13 @@ public class FoundationModelsService {
                 let extracted = response.content.activities
                 let mapped = extracted.map { item in
                     let combinedGoal = item.description.isEmpty ? item.goal : "\(item.description)\n\nGoal: \(item.goal)"
+                    let idealParticipants = item.participants
+                        .components(separatedBy: CharacterSet.decimalDigits.inverted)
+                        .compactMap { Int($0) }
+                        .max() ?? 10
                     return Activity(
                         name: item.name,
-                        participants: item.participants.isEmpty ? "-" : item.participants,
+                        participants: idealParticipants,
                         goal: combinedGoal,
                         howToPlay: item.howToPlay,
                         possibleProperties: [item.property.isEmpty ? "-" : item.property]

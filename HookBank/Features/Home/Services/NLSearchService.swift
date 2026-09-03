@@ -35,8 +35,8 @@ class NLSearchService {
 
     /// Ranks activities against the query, best match first.
     ///
-    /// An activity whose known participant range excludes an explicit number in the query — "5
-    /// people" against an activity that needs 8 to 12 — is demoted below every activity that could
+    /// An activity whose ideal participant count is far from an explicit number in the query — "5
+    /// people" against an activity ideally run with 20 — is demoted below every activity that could
     /// actually be played, no matter how well its name or goal happens to match on other words.
     /// That mismatch is a hard fact about the activity, not a matter of degree, so it can't be
     /// outweighed by an unrelated word coincidentally appearing in the activity's own name.
@@ -102,22 +102,18 @@ class NLSearchService {
         return (words, numbers)
     }
 
-    /// Parses a `participants` string like "10-20", "4-6" or "20" into the range it describes.
-    /// Returns `nil` for a placeholder like "-", which carries no participant-count information.
-    private func participantRange(_ participants: String) -> ClosedRange<Int>? {
-        let numbers = participants
-            .components(separatedBy: CharacterSet.decimalDigits.inverted)
-            .compactMap { Int($0) }
-        guard let lower = numbers.min(), let upper = numbers.max() else { return nil }
-        return lower...upper
-    }
+    /// A query headcount is treated as compatible with an activity's ideal participant count when
+    /// it falls within this many people of it — the ideal is a facilitator-sized target, not a hard
+    /// cap, so a query a little above or below it shouldn't be flagged as a mismatch.
+    private static let participantTolerance = 5
 
-    /// True when the query names a specific headcount and this activity's own participant range is
-    /// known to exclude it — "5 people" against an activity that needs 8 to 12 can't be played as
-    /// asked, regardless of how many other words happen to match.
+    /// True when the query names a specific headcount that's far from this activity's ideal
+    /// participant count — e.g. "5 people" against an activity ideally run with 20 people can't be
+    /// played as asked, regardless of how many other words happen to match.
     private func hasParticipantMismatch(_ activity: Activity, numbers: [Int]) -> Bool {
-        guard !numbers.isEmpty, let range = participantRange(activity.participants) else { return false }
-        return !numbers.contains(where: range.contains)
+        guard !numbers.isEmpty else { return false }
+        let ideal = activity.participants
+        return !numbers.contains { abs($0 - ideal) <= Self.participantTolerance }
     }
 
     /// Sums how strongly the query hits this activity, weighted by how specific the match is.
@@ -129,16 +125,14 @@ class NLSearchService {
     private func literalScore(for activity: Activity, words: [String], numbers: [Int]) -> Int {
         var total = 0
 
-        if let range = participantRange(activity.participants) {
-            total += numbers.filter(range.contains).count * 5
-        }
+        total += numbers.filter { abs($0 - activity.participants) <= Self.participantTolerance }.count * 5
 
         let properties = activity.possibleProperties.joined(separator: " ")
         for word in words {
             if activity.name.localizedStandardContains(word) {
                 total += 3
-            } else if activity.participants.localizedStandardContains(word)
-                        || properties.localizedStandardContains(word) {
+            } else if properties.localizedStandardContains(word)
+                        || activity.categories.contains(where: { $0.localizedStandardContains(word) }) {
                 total += 2
             } else if activity.goal.localizedStandardContains(word)
                         || activity.howToPlay.localizedStandardContains(word) {
@@ -166,7 +160,7 @@ class NLSearchService {
 
     /// Every field goes into the embedded text on purpose, so meaning carried by any of them counts.
     private func embeddingText(for activity: Activity) -> String {
-        "\(activity.name). Goal: \(activity.goal). Rules: \(activity.howToPlay). Properties: \(activity.possibleProperties.joined(separator: ", "))"
+        "\(activity.name). Categories: \(activity.categories.joined(separator: ", ")). Goal: \(activity.goal). Rules: \(activity.howToPlay). Properties: \(activity.possibleProperties.joined(separator: ", "))"
     }
 
     private func cachedVector(for activity: Activity, using embedding: NLEmbedding) -> [Double]? {

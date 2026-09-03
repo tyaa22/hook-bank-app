@@ -6,18 +6,20 @@ import SwiftData
 public final class DraftActivity: Identifiable {
     @Attribute(.unique) public var id: UUID
     public var name: String
-    public var minParticipants: Int
-    public var maxParticipants: Int
+    public var participants: Int
+    public var duration: String
+    public var categories: [String]
     public var goal: String
     public var howToPlay: String
     public var possibleProperties: [String]
     public var lastUpdated: Date
-    
+
     public init(
         id: UUID = UUID(),
         name: String = "",
-        minParticipants: Int = 1,
-        maxParticipants: Int = 10,
+        participants: Int = 10,
+        duration: String = "-",
+        categories: [String] = [],
         goal: String = "",
         howToPlay: String = "",
         possibleProperties: [String] = [],
@@ -25,8 +27,9 @@ public final class DraftActivity: Identifiable {
     ) {
         self.id = id
         self.name = name
-        self.minParticipants = minParticipants
-        self.maxParticipants = maxParticipants
+        self.participants = participants
+        self.duration = duration
+        self.categories = categories
         self.goal = goal
         self.howToPlay = howToPlay
         self.possibleProperties = possibleProperties
