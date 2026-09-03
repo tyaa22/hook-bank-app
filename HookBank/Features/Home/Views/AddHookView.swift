@@ -24,7 +24,6 @@ public struct AddHookView: View {
     @State private var howToPlay: String = ""
     
     let grayBackground = Color("CardBackgroundColor")
-    
     private var isEditMode: Bool { activityToEdit != nil }
     private var headerTitle: String { isEditMode ? "Edit Hook" : "Add Hook" }
     
@@ -38,148 +37,11 @@ public struct AddHookView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    
-                    // Title
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Title")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        
-                        TextField("Required", text: $title)
-                            .padding()
-                            .background(grayBackground)
-                            .cornerRadius(20)
-                    }
-                    
-                    // Participant
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Participant")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        
-                        VStack(spacing: 0) {
-                            HStack {
-                                Text("Minimum")
-                                    .foregroundColor(Color(white: 0.7))
-                                Spacer()
-                                TextField("", value: $minParticipants, format: .number)
-                                    .keyboardType(.numberPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .cornerRadius(8)
-                            }
-                            .padding()
-                            
-                            Divider().padding(.horizontal)
-                            
-                            HStack {
-                                Text("Maximum")
-                                    .foregroundColor(Color(white: 0.7))
-                                Spacer()
-                                TextField("", value: $maxParticipants, format: .number)
-                                    .keyboardType(.numberPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .cornerRadius(8)
-                            }
-                            .padding()
-                        }
-                        .background(grayBackground)
-                        .cornerRadius(20)
-                        .onChange(of: minParticipants) { _, newValue in
-                            if newValue > 100 { minParticipants = 100 }
-                            else if newValue < 1 { minParticipants = 1 }
-                            
-                            if maxParticipants < minParticipants {
-                                maxParticipants = minParticipants
-                            }
-                        }
-                        .onChange(of: maxParticipants) { _, newValue in
-                            if newValue > 100 { maxParticipants = 100 }
-                            else if newValue < minParticipants { maxParticipants = minParticipants }
-                        }
-                    }
-                    
-                    // Goal
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Goal")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        
-                        TextField("Required", text: $goal, axis: .vertical)
-                            .lineLimit(4...8)
-                            .padding()
-                            .background(grayBackground)
-                            .cornerRadius(20)
-                    }
-                    
-                    // Material
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Material")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        
-                        VStack(alignment: .leading, spacing: 12) {
-                            if !materials.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    ForEach(materials, id: \.self) { material in
-                                        HStack {
-                                            Text("• \(material)")
-                                            Spacer()
-                                            Button(action: {
-                                                materials.removeAll { $0 == material }
-                                            }) {
-                                                Image(systemName: "minus.circle.fill")
-                                                    .foregroundColor(.red)
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding(.bottom, 8)
-                            }
-                            
-                            HStack {
-                                TextField("Optional", text: $newMaterial)
-                                    .focused($isMaterialFieldFocused)
-                                
-                                if isMaterialFieldFocused {
-                                    Button(action: {
-                                        let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        if !trimmed.isEmpty && !materials.contains(trimmed) {
-                                            materials.append(trimmed)
-                                            newMaterial = ""
-                                        }
-                                    }) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
-                                    }
-                                    .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(grayBackground)
-                        .cornerRadius(20)
-                    }
-                    
-                    // Instructions
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("How to Play")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        
-                        TextField("Required", text: $howToPlay, axis: .vertical)
-                            .lineLimit(6...12)
-                            .padding()
-                            .background(grayBackground)
-                            .cornerRadius(20)
-                    }
-                    
+                    titleSection
+                    participantSection
+                    goalSection
+                    materialSection
+                    instructionsSection
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -189,19 +51,7 @@ public struct AddHookView: View {
             .navigationTitle(headerTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isEditMode ? "Save" : "Add") {
-                        saveHook()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
-                }
+                toolBarSection
             }
         }
         .onTapGesture {
@@ -295,6 +145,191 @@ public struct AddHookView: View {
             }
         }
         dismiss()
+    }
+    
+    // MARK: - Subviews
+    
+    private var titleSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Title")
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            TextField("Required", text: $title)
+                .padding()
+                .background(grayBackground)
+                .cornerRadius(20)
+        }
+    }
+    
+    private var participantSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Participant")
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Minimum")
+                        .foregroundColor(Color(white: 0.7))
+                    Spacer()
+                    TextField("", value: $minParticipants, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .cornerRadius(8)
+                }
+                .padding()
+                
+                Divider().padding(.horizontal)
+                
+                HStack {
+                    Text("Maximum")
+                        .foregroundColor(Color(white: 0.7))
+                    Spacer()
+                    TextField("", value: $maxParticipants, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .cornerRadius(8)
+                }
+                .padding()
+            }
+            .background(grayBackground)
+            .cornerRadius(20)
+            .onChange(of: minParticipants) { _, newValue in
+                if newValue > 100 { minParticipants = 100 }
+                else if newValue < 1 { minParticipants = 1 }
+                
+                if maxParticipants < minParticipants {
+                    maxParticipants = minParticipants
+                }
+            }
+            .onChange(of: maxParticipants) { _, newValue in
+                if newValue > 100 { maxParticipants = 100 }
+                else if newValue < minParticipants { maxParticipants = minParticipants }
+            }
+        }
+    }
+    
+    private var goalSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Goal")
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            TextField("Required", text: $goal, axis: .vertical)
+                .lineLimit(4...8)
+                .padding()
+                .background(grayBackground)
+                .cornerRadius(20)
+        }
+    }
+    
+    private var materialSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Material")
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                if !materials.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(materials, id: \.self) { material in
+                            HStack {
+                                Text("• \(material)")
+                                Spacer()
+                                Button(action: {
+                                    materials.removeAll { $0 == material }
+                                }) {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom, 8)
+                }
+                
+                HStack {
+                    TextField("Optional", text: $newMaterial)
+                        .focused($isMaterialFieldFocused)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmed.isEmpty && !materials.contains(trimmed) {
+                                materials.append(trimmed)
+                                newMaterial = ""
+                                // Keep the field focused to allow adding multiple materials quickly
+                                isMaterialFieldFocused = true
+                            }
+                        }
+                    
+                    if isMaterialFieldFocused {
+                        Button(action: {
+                            let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmed.isEmpty && !materials.contains(trimmed) {
+                                materials.append(trimmed)
+                                newMaterial = ""
+                            }
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
+                        }
+                        .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+            .padding()
+            .background(grayBackground)
+            .cornerRadius(20)
+        }
+    }
+    
+    private var instructionsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("How to Play")
+                .font(.subheadline)
+                .fontWeight(.bold)
+            
+            TextField("Required", text: $howToPlay, axis: .vertical)
+                .lineLimit(6...12)
+                .padding()
+                .background(grayBackground)
+                .cornerRadius(20)
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolBarSection: some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.black)
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(width: 30, height: 30)
+            .tint(Color.gray.opacity(0.3))
+            .buttonBorderShape(.circle)
+        }
+        
+        ToolbarItem(placement: .confirmationAction) {
+            Button(action: saveHook) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 18, weight: .regular))
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(width: 30, height: 30)
+            .tint(Color("PrimaryAccentColor"))
+            .buttonBorderShape(.circle)
+            .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
+        }
     }
 }
 

@@ -254,8 +254,8 @@ public struct ImportPDFView: View {
         case .extracting, .analyzing:
             Button(action: {}) {
                 HStack {
-                    Image(systemName: "sparkles")
-                    Text("Analyze with AI")
+//                    Image(systemName: "sparkles")
+                    Text("Import PDF")
                 }
                 .font(.headline)
                 .foregroundColor(.white)
@@ -276,8 +276,8 @@ public struct ImportPDFView: View {
                 }
             }) {
                 HStack {
-                    Image(systemName: "sparkles")
-                    Text("Analyze with AI")
+//                    Image(systemName: "sparkles")
+                    Text("Import PDF")
                 }
                 .font(.headline)
                 .foregroundColor(.white)

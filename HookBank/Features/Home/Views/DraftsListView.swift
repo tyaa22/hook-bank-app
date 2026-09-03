@@ -99,3 +99,7 @@ public struct DraftsListView: View {
         }
     }
 }
+
+//#Preview {
+//    DraftsListView(viewModel: <#T##HomeViewModel#>)
+//}
