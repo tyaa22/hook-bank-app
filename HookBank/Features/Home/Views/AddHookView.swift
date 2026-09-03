@@ -8,6 +8,7 @@ public struct AddIcebreakerView: View {
     var viewModel: HomeViewModel
     var activityToEdit: Activity? = nil
     @State private var draftToEdit: DraftActivity? = nil
+    @State private var showDismissDialog: Bool = false
     
     @State private var title: String = ""
     @State private var minParticipants: Int = 1
@@ -53,7 +54,20 @@ public struct AddIcebreakerView: View {
             .toolbar {
                 toolBarSection
             }
+            .background(InteractiveDismissTracker {
+                showDismissDialog = true
+            })
+            .confirmationDialog("What would you like to do with this draft?", isPresented: $showDismissDialog, titleVisibility: .visible) {
+                Button("Delete Draft", role: .destructive) {
+                    deleteDraftAndDismiss()
+                }
+                Button("Save Draft") {
+                    saveDraftAndDismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            }
         }
+        .interactiveDismissDisabled(true)
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
@@ -144,6 +158,18 @@ public struct AddIcebreakerView: View {
                 context.delete(draft)
             }
         }
+        dismiss()
+    }
+    
+    private func deleteDraftAndDismiss() {
+        if let draft = draftToEdit, !isEditMode {
+            context.delete(draft)
+        }
+        dismiss()
+    }
+    
+    private func saveDraftAndDismiss() {
+        // Already auto-saved by onChange
         dismiss()
     }
     
@@ -308,10 +334,10 @@ public struct AddIcebreakerView: View {
     @ToolbarContentBuilder
     private var toolBarSection: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
-            Button(action: { dismiss() }) {
+            Button(action: { showDismissDialog = true }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 18, weight: .regular))
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
             }
             .buttonStyle(.borderedProminent)
             .frame(width: 30, height: 30)
@@ -339,4 +365,40 @@ public struct AddIcebreakerView: View {
 
 #Preview("Edit Mode") {
     AddIcebreakerView(viewModel: HomeViewModel(), activityToEdit: Activity.mockActivities[0])
+}
+
+struct InteractiveDismissTracker: UIViewControllerRepresentable {
+    var onAttemptToDismiss: () -> Void
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = UIViewController()
+        DispatchQueue.main.async {
+            // Find the presentation controller and hijack its delegate
+            vc.parent?.presentationController?.delegate = context.coordinator
+        }
+        return vc
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onAttemptToDismiss: onAttemptToDismiss)
+    }
+    
+    class Coordinator: NSObject, UIAdaptivePresentationControllerDelegate {
+        var onAttemptToDismiss: () -> Void
+        
+        init(onAttemptToDismiss: @escaping () -> Void) {
+            self.onAttemptToDismiss = onAttemptToDismiss
+        }
+        
+        func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+            onAttemptToDismiss()
+        }
+        
+        // This ensures the sheet doesn't dismiss on its own when the delegate is set
+        func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool {
+            return false
+        }
+    }
 }

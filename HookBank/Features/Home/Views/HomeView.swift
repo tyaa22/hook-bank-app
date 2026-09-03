@@ -330,14 +330,17 @@ public struct HomeView: View {
                 Label("Import PDF", systemImage: "doc.fill")
             }
         } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.black)
-                .frame(width: 35, height: 35)
-//                .background(Color("PrimaryAccentColor"), in: Circle())
-                .contentShape(Circle())
+            Button(action: {}) {
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.white)
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(width: 30, height: 30)
+            .tint(Color("PrimaryAccentColor"))
+            .buttonBorderShape(.circle)
         }
-        .buttonStyle(.plain)
+        
     }
     
     private func deleteSelectedIcebreakers() {
