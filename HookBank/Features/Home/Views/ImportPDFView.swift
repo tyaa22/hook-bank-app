@@ -18,6 +18,7 @@ public struct ImportPDFView: View {
     @State private var state: ImportState = .empty
     @State private var showFilePicker = false
     @State private var selectedURL: URL? = nil
+    @State private var showDismissAlert = false
 
     let grayBackground = Color(white: 0.95)
     let orangeColor = Color(red: 224/255, green: 122/255, blue: 63/255)
@@ -30,7 +31,7 @@ public struct ImportPDFView: View {
         VStack(spacing: 0) {
             // Custom Header
             HStack {
-                Button(action: { dismiss() }) {
+                Button(action: { handleDismissAttempt() }) {
                     Image(systemName: "xmark")
                         .font(.system(size: 23, weight: .bold))
                         .foregroundColor(.black)
@@ -61,6 +62,18 @@ public struct ImportPDFView: View {
             Spacer()
 
             bottomButton
+        }
+        .background(InteractiveDismissTracker {
+            handleDismissAttempt()
+        })
+        .interactiveDismissDisabled(true)
+        .alert("Cancel Import?", isPresented: $showDismissAlert) {
+            Button("Cancel Import", role: .destructive) {
+                dismiss()
+            }
+            Button("Continue", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to stop importing this PDF?")
         }
         .fileImporter(
             isPresented: $showFilePicker,
@@ -101,6 +114,17 @@ public struct ImportPDFView: View {
             // Fires however the sheet closes — the X button, swipe-to-dismiss, or otherwise —
             // so a Gemini extraction in progress doesn't keep running after this view is gone.
             viewModel.cancelAnalysis()
+        }
+    }
+    
+    private func handleDismissAttempt() {
+        switch state {
+        case .empty, .error:
+            // Nothing to lose, just dismiss immediately
+            dismiss()
+        default:
+            // Warn the user before they lose their extraction/analysis progress
+            showDismissAlert = true
         }
     }
 
@@ -310,7 +334,6 @@ public struct ImportPDFView: View {
         }
     }
 }
-
 #Preview {
     ImportPDFView(viewModel: HomeViewModel())
 }

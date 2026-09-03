@@ -7,6 +7,7 @@ public struct DraftsListView: View {
     @Query(sort: \DraftActivity.lastUpdated, order: .reverse) private var drafts: [DraftActivity]
     @State private var showAddSheet: Bool = false
     @State private var selectedDraft: DraftActivity? = nil
+    @State private var draftToDelete: DraftActivity? = nil
     
     var viewModel: HomeViewModel
     let grayBackground = Color("CardBackgroundColor")
@@ -58,7 +59,7 @@ public struct DraftsListView: View {
                         .listRowBackground(Color.clear)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
-                                context.delete(draft)
+                                draftToDelete = draft
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -78,7 +79,7 @@ public struct DraftsListView: View {
                                 Label("Edit", systemImage: "pencil")
                             }
                             Button(role: .destructive) {
-                                context.delete(draft)
+                                draftToDelete = draft
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -87,6 +88,24 @@ public struct DraftsListView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .confirmationDialog(
+                    "Delete Draft Icebreaker",
+                    isPresented: Binding(
+                        get: { draftToDelete != nil },
+                        set: { if !$0 { draftToDelete = nil } }
+                    ),
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete", role: .destructive) {
+                        if let draft = draftToDelete {
+                            context.delete(draft)
+                        }
+                        draftToDelete = nil
+                    }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("Are you sure you want to delete this draft icebreaker? \nThis action cannot be undone.")
+                }
             }
         }
         .navigationTitle("Drafts")

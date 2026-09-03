@@ -16,6 +16,8 @@ public struct HomeView: View {
     @State private var isSelectionMode: Bool = false
     @State private var selectedIcebreakers: Set<UUID> = []
     @State private var showDeleteConfirm : Bool = false
+    @State private var draftToDelete: DraftActivity?
+    @State private var activityToDelete: Activity?
     
     @State private var isSearchActive: Bool = false
     
@@ -48,10 +50,15 @@ public struct HomeView: View {
                     VStack(spacing: 0) {
                         // Custom Toolbar
                         HStack {
-                            Text("Sparkleash")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
+                            HStack {
+                                Image("sparkleash_logo")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
+                                Text("Sparkleash")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color("PrimaryAccentColor"))
+                            }
                             
                             Spacer()
                             
@@ -86,7 +93,7 @@ public struct HomeView: View {
                                 if !drafts.isEmpty {
                                     if !isSelectionMode && !isSearchActive {
                                         HStack(spacing: 8) {
-                                            Text("Draft Icebreaker")
+                                            Text("Icebreakers' Draft")
                                                 .font(.title2)
                                                 .fontWeight(.bold)
                                                 .foregroundColor(.black)
@@ -134,7 +141,7 @@ public struct HomeView: View {
                                         .listRowBackground(Color.clear)
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
-                                                context.delete(draft)
+                                                draftToDelete = draft
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -154,7 +161,7 @@ public struct HomeView: View {
                                                 Label("Edit", systemImage: "pencil")
                                             }
                                             Button(role: .destructive) {
-                                                context.delete(draft)
+                                                draftToDelete = draft
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -173,7 +180,7 @@ public struct HomeView: View {
                             }
                             
                             // MARK: - List Icebreaker Section
-                            Text("List Icebreaker")
+                            Text("All Icebreakers")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
@@ -226,7 +233,7 @@ public struct HomeView: View {
                                         .listRowBackground(Color.clear)
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
-                                                context.delete(activity)
+                                                activityToDelete = activity
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -246,7 +253,7 @@ public struct HomeView: View {
                                                 Label("Edit", systemImage: "pencil")
                                             }
                                             Button(role: .destructive) {
-                                                context.delete(activity)
+                                                activityToDelete = activity
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -258,7 +265,56 @@ public struct HomeView: View {
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
                         .scrollDismissesKeyboard(.interactively)
-                        
+                        .confirmationDialog(
+                            "Delete Draft Icebreaker",
+                            isPresented: Binding(
+                                get: { draftToDelete != nil },
+                                set: { if !$0 { draftToDelete = nil } }
+                            ),
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete", role: .destructive) {
+                                if let draft = draftToDelete {
+                                    context.delete(draft)
+                                }
+                                draftToDelete = nil
+                            }
+                            Button("Cancel", role: .cancel) { }
+                        } message: {
+                            Text("Are you sure you want to delete this draft icebreaker? \nThis action cannot be undone.")
+                        }
+                        .confirmationDialog(
+                            "Delete Icebreaker",
+                            isPresented: Binding(
+                                get: { activityToDelete != nil },
+                                set: { if !$0 { activityToDelete = nil } }
+                            ),
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete", role: .destructive) {
+                                if let activity = activityToDelete {
+                                    context.delete(activity)
+                                }
+                                activityToDelete = nil
+                            }
+                            Button("Cancel", role: .cancel) { }
+                        } message: {
+                            Text("Are you sure you want to delete this icebreaker? \nThis action cannot be undone.")
+                        }
+                        .confirmationDialog(
+                            selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
+                            isPresented: $showDeleteConfirm,
+                            titleVisibility: .visible
+                        ) {
+                            Button("Delete", role: .destructive) {
+                                deleteSelectedIcebreakers()
+                            }
+                            Button("Cancel", role: .cancel) { }
+                        } message: {
+                            Text(selectedIcebreakers.count > 1 
+                                 ? "Are you sure you want to delete these \(selectedIcebreakers.count) icebreakers?\nThis action cannot be undone."
+                                 : "Are you sure you want to delete this icebreaker?\nThis action cannot be undone.")
+                        }
                     }
                 }
             }
@@ -282,20 +338,6 @@ public struct HomeView: View {
                                 .padding(.vertical, 8)
                         }
                         .disabled(selectedIcebreakers.isEmpty)
-                        .confirmationDialog(
-                            selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
-                            isPresented: $showDeleteConfirm,
-                            titleVisibility: .visible
-                        ) {
-                            Button("Keep") {
-                                showDeleteConfirm.toggle()
-                            }
-                            Button("Delete", role: .destructive) {
-                                deleteSelectedIcebreakers()
-                            }
-                        } message: {
-                            Text("This action cannot be undone.")
-                        }
                     } else {
                         addIcebreakerMenu
                     }
