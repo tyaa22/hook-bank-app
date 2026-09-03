@@ -14,6 +14,12 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         "gemini-3.5-flash",
         "gemini-3.5-flash-lite"
     ]
+
+    /// How many pages are sent to Gemini at once. Processing pages one at a time made import time
+    /// scale linearly with page count — a 20-page PDF meant 20 sequential network round-trips.
+    /// Running several concurrently cuts wall-clock time roughly by this factor without increasing
+    /// the number of API calls. Kept modest to stay clear of per-project rate limits.
+    private let maxConcurrentPages = 4
     
     private let firebaseAI: FirebaseAI
     
@@ -39,6 +45,18 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         }
     }
     
+    /// Plain, `Sendable` mirror of `Activity`'s fields. `Activity` is a SwiftData `@Model` and isn't
+    /// Sendable, so it can't cross the concurrency boundary of a `TaskGroup` child task — this type
+    /// is what actually flows between pages processed in parallel; the real `Activity` objects are
+    /// only constructed back on the caller's side once every page has finished.
+    private struct ExtractedActivityData: Sendable {
+        let name: String
+        let participants: String
+        let goal: String
+        let howToPlay: String
+        let possibleProperties: [String]
+    }
+
     // MARK: - Codable Intermediate Structures
     private struct ExtractionResponse: Codable {
         let activities: [ExtractedActivityItem]?
@@ -125,6 +143,12 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     }
     
     // MARK: - Main Extraction Method
+
+    /// Extracts activities from every page, up to `maxConcurrentPages` at a time, instead of one
+    /// request after another. `progress` now reports how many pages have *finished* (not which page
+    /// is "current") — with concurrent requests, page 5 can complete before page 3 does — and
+    /// results are reassembled in original page order regardless of completion order, so the
+    /// output is identical to the old sequential version, just faster to produce.
     public func extractActivities(
         from pages: [String],
         progress: @escaping @Sendable (Int, Int) -> Void
@@ -132,43 +156,82 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         guard !pages.isEmpty else {
             throw GeminiError.emptyPages
         }
-        
-        var allActivities: [Activity] = []
+
         let totalPages = pages.count
+        let pendingPages: [(pageNumber: Int, text: String)] = pages.enumerated().compactMap { index, pageText in
+            let trimmed = pageText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : (index + 1, trimmed)
+        }
+
+        var resultsByPage: [Int: [ExtractedActivityData]] = [:]
         var lastPageError: Error?
-        
-        for (index, pageText) in pages.enumerated() {
-            let currentPage = index + 1
-            progress(currentPage, totalPages)
-            
-            let trimmedText = pageText.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmedText.isEmpty else { continue }
-            
-            // Extract activities from this page using candidate models with automatic fallback
-            do {
-                let pageActivities = try await extractFromSinglePageWithFallback(pageText: trimmedText, pageNumber: currentPage)
-                allActivities.append(contentsOf: pageActivities)
-            } catch {
-                lastPageError = error
-                print("⚠️ [GeminiAIService] Failed extracting page \(currentPage): \(error.localizedDescription)")
+        var completedCount = 0
+
+        await withTaskGroup(of: (pageNumber: Int, outcome: Result<[ExtractedActivityData], Error>).self) { group in
+            var nextPending = pendingPages[...]
+
+            func startNextTask() {
+                guard let next = nextPending.first else { return }
+                nextPending = nextPending.dropFirst()
+                group.addTask {
+                    do {
+                        let data = try await self.extractFromSinglePageWithFallback(pageText: next.text, pageNumber: next.pageNumber)
+                        return (next.pageNumber, .success(data))
+                    } catch {
+                        return (next.pageNumber, .failure(error))
+                    }
+                }
+            }
+
+            for _ in 0..<min(maxConcurrentPages, pendingPages.count) {
+                startNextTask()
+            }
+
+            while let (pageNumber, outcome) = await group.next() {
+                completedCount += 1
+                progress(completedCount, totalPages)
+
+                switch outcome {
+                case .success(let data):
+                    resultsByPage[pageNumber] = data
+                case .failure(let error):
+                    lastPageError = error
+                    print("⚠️ [GeminiAIService] Failed extracting page \(pageNumber): \(error.localizedDescription)")
+                }
+
+                startNextTask()
             }
         }
-        
+
+        // `Activity` (SwiftData) is only ever constructed here, back on the caller's context —
+        // never inside the concurrent child tasks above.
+        let allActivities = resultsByPage.keys.sorted().flatMap { pageNumber in
+            (resultsByPage[pageNumber] ?? []).map { data in
+                Activity(
+                    name: data.name,
+                    participants: data.participants,
+                    goal: data.goal,
+                    howToPlay: data.howToPlay,
+                    possibleProperties: data.possibleProperties
+                )
+            }
+        }
+
         guard !allActivities.isEmpty else {
             if let error = lastPageError {
                 throw error
             }
             throw GeminiError.noActivitiesFound
         }
-        
+
         return allActivities
     }
-    
+
     // MARK: - Page Extraction with Model Fallback
     private func extractFromSinglePageWithFallback(
         pageText: String,
         pageNumber: Int
-    ) async throws -> [Activity] {
+    ) async throws -> [ExtractedActivityData] {
         var lastError: Error?
         
         for (idx, modelName) in modelCandidates.enumerated() {
@@ -200,7 +263,7 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     private func requestGeneration(
         modelName: String,
         pageText: String
-    ) async throws -> [Activity] {
+    ) async throws -> [ExtractedActivityData] {
         let generationConfig = GenerationConfig(
             temperature: 0.2,
             responseMIMEType: "application/json",
@@ -246,7 +309,7 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     }
     
     // MARK: - JSON Parser
-    private func parseResponseJSON(_ jsonString: String) -> [Activity] {
+    private func parseResponseJSON(_ jsonString: String) -> [ExtractedActivityData] {
         // Clean markdown code blocks if present (```json ... ```)
         var cleaned = jsonString.trimmingCharacters(in: .whitespacesAndNewlines)
         if cleaned.hasPrefix("```json") {
@@ -268,32 +331,32 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         // Attempt decoding as ExtractionResponse { "activities": [...] }
         if let result = try? decoder.decode(ExtractionResponse.self, from: data),
            let items = result.activities {
-            return mapItemsToActivities(items)
+            return mapItemsToData(items)
         }
-        
+
         // Attempt decoding directly as [ExtractedActivityItem]
         if let directArray = try? decoder.decode([ExtractedActivityItem].self, from: data) {
-            return mapItemsToActivities(directArray)
+            return mapItemsToData(directArray)
         }
-        
+
         // Attempt decoding single item
         if let singleItem = try? decoder.decode(ExtractedActivityItem.self, from: data) {
-            return mapItemsToActivities([singleItem])
+            return mapItemsToData([singleItem])
         }
-        
+
         return []
     }
-    
-    private func mapItemsToActivities(_ items: [ExtractedActivityItem]) -> [Activity] {
+
+    private func mapItemsToData(_ items: [ExtractedActivityItem]) -> [ExtractedActivityData] {
         return items.compactMap { item in
             guard let name = item.name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
                 return nil
             }
-            
+
             let goal = item.goal?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "-"
             let howToPlay = item.howToPlay?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "-"
             let participant = item.participant ?? item.participants ?? "-"
-            
+
             var properties: [String] = []
             if let props = item.property {
                 properties = props.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && $0 != "-" }
@@ -301,8 +364,8 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
             if properties.isEmpty, let single = item.singleProperty?.trimmingCharacters(in: .whitespacesAndNewlines), !single.isEmpty, single != "-" {
                 properties = [single]
             }
-            
-            return Activity(
+
+            return ExtractedActivityData(
                 name: name,
                 participants: participant.isEmpty ? "-" : participant,
                 goal: goal.isEmpty ? "-" : goal,

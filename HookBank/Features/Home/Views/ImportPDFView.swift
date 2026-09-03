@@ -201,7 +201,7 @@ public struct ImportPDFView: View {
                         }
                     }
                     .frame(height: 6)
-                    Text("Page \(viewModel.currentPageImporting) of \(viewModel.totalPagesImporting)")
+                    Text("\(viewModel.currentPageImporting) of \(viewModel.totalPagesImporting) pages processed")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }

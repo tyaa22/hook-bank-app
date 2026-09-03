@@ -37,13 +37,7 @@ class ActivitySearchViewModel: ObservableObject {
         }
 
         if semantic {
-            let candidates = allActivities.map(NLSearchService.Candidate.init)
-            Task { [weak self] in
-                let ranked = await NLSearchService.shared.rank(query: trimmed, candidates: candidates)
-                guard let self else { return }
-                let byID = Dictionary(allActivities.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-                filteredActivities = ranked.compactMap { byID[$0] }
-            }
+            filteredActivities = NLSearchService.shared.search(query: trimmed, activities: allActivities)
         } else {
             filteredActivities = allActivities.filter { activity in
                 activity.name.localizedCaseInsensitiveContains(trimmed) ||
