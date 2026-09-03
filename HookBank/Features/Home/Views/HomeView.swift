@@ -9,6 +9,7 @@ public struct HomeView: View {
     @Environment(\.modelContext) private var context
     @State private var viewModel = HomeViewModel()
     @State private var searchText: String = ""
+    @State private var searchTokens: [CategoryFilterToken] = []
     @State private var showAddSheet: Bool = false
     @State private var selectedDraft: DraftActivity? = nil
     @State private var selectedActivity: Activity? = nil
@@ -26,12 +27,16 @@ public struct HomeView: View {
     public init() {}
     
     /// Resolved against the live `@Query` result, so deleted Icebreakers drop out on their own.
+    /// The category token (if any) narrows the pool first, then the typed query searches within it.
     var filteredActivities: [Activity] {
-        if searchText.isEmpty {
-            return activities
-        } else {
-            return NLSearchService.shared.search(query: searchText, activities: activities)
+        var result = activities
+        if let category = searchTokens.first?.category {
+            result = result.filter { $0.categories.contains(category) }
         }
+        if !searchText.isEmpty {
+            result = NLSearchService.shared.search(query: searchText, activities: result)
+        }
+        return result
     }
     
     public var body: some View {
@@ -314,15 +319,55 @@ public struct HomeView: View {
                             Text(selectedIcebreakers.count > 1 
                                  ? "Are you sure you want to delete these \(selectedIcebreakers.count) icebreakers?\nThis action cannot be undone."
                                  : "Are you sure you want to delete this icebreaker?\nThis action cannot be undone.")
+                }
+            }
+            .searchable(text: $searchText, tokens: $searchTokens, isPresented: $isSearchActive, prompt: "Search") { token in
+                Text(token.category)
+            }
+            .searchSuggestions {
+                if searchTokens.isEmpty {
+                    Section("Icebreaker Categories") {
+                        ForEach(ActivityCategory.allCases, id: \.self) { category in
+                            Button {
+                                searchTokens = [CategoryFilterToken(category: category.rawValue)]
+                            } label: {
+                                HStack {
+                                    Label {
+                                        Text(category.rawValue)
+                                            .foregroundColor(.black)
+                                    } icon: {
+                                        Image(systemName: category.symbolName)
+                                            .frame(width: 24, alignment: .center)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(Color(white: 0.7))
+                                }
+                            }
+                            .tint(Color("PrimaryAccentColor"))
                         }
                     }
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
-            .searchable(text: $searchText, isPresented: $isSearchActive, prompt: "Search")
             .toolbar {
+                if !activities.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            withAnimation {
+                                isSelectionMode.toggle()
+                                if !isSelectionMode {
+                                    selectedIcebreakers.removeAll()
+                                }
+                            }
+                        } label: {
+                            Text(isSelectionMode ? "Cancel" : "Select")
+                        }
+                    }
+                }
+
                 DefaultToolbarItem(kind: .search, placement: .bottomBar)
-                
+
                 ToolbarItemGroup(placement: .bottomBar) {
                     Spacer()
                     
@@ -343,6 +388,20 @@ public struct HomeView: View {
                     }
                 }
             }
+            .confirmationDialog(
+                selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Keep") {
+                    showDeleteConfirm = false
+                }
+                Button("Delete", role: .destructive) {
+                    deleteSelectedIcebreakers()
+                }
+            } message: {
+                Text("This action cannot be undone.")
+            }
             .sheet(isPresented: $showAddSheet, onDismiss: {
                 selectedDraft = nil
                 selectedActivity = nil
@@ -356,6 +415,31 @@ public struct HomeView: View {
             .toolbarBackground(.clear, for: .bottomBar)
         }
         
+    }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image("home_logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 120, height: 120)
+                .padding(.bottom, 8)
+
+            Text("No Entries")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+
+            Text("To add an entry, tap the plus button")
+                .font(.subheadline)
+                .foregroundColor(Color("DescriptionColor"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 36)
+        }
+        .frame(maxWidth: .infinity, minHeight: 400, alignment: .center)
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
     
     private var addIcebreakerMenu: some View {
@@ -392,30 +476,14 @@ public struct HomeView: View {
         selectedIcebreakers.removeAll()
         isSelectionMode = false
     }
-    @ViewBuilder
-    private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image("home_logo")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 200, height: 200)
-                .padding(.bottom, 8)
-            
-            Text("No Entries")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-            
-            Text("To add an entry, tap the plus button")
-                .font(.subheadline)
-                .foregroundColor(Color("DescriptionColor"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 36)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 120)
+}
 
-        }
-    }
+/// A search token representing "filter by this category" — renders as a removable pill inside the
+/// search field (standard system behavior for `.searchable(text:tokens:...)`) once picked from the
+/// "Icebreaker Categories" suggestions.
+struct CategoryFilterToken: Identifiable, Hashable {
+    let id = UUID()
+    let category: String
 }
 
 #Preview {

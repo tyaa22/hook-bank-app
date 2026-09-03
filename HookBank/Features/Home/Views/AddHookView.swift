@@ -11,8 +11,10 @@ public struct AddIcebreakerView: View {
     @State private var showDismissDialog: Bool = false
     
     @State private var title: String = ""
-    @State private var minParticipants: Int = 1
-    @State private var maxParticipants: Int = 10
+    @State private var selectedCategories: Set<String> = []
+    @State private var idealParticipants: Int? = nil
+    @State private var durationMin: Int = 10
+    @State private var durationMax: Int = 20
     @State private var goal: String = ""
     
     // Materials
@@ -39,7 +41,9 @@ public struct AddIcebreakerView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     titleSection
+                    categorySection
                     participantSection
+                    durationSection
                     goalSection
                     materialSection
                     instructionsSection
@@ -55,7 +59,7 @@ public struct AddIcebreakerView: View {
                 toolBarSection
             }
             .background(InteractiveDismissTracker {
-                showDismissDialog = true
+                handleCancelTapped()
             })
             .confirmationDialog("What would you like to do with this draft?", isPresented: $showDismissDialog, titleVisibility: .visible) {
                 Button("Delete Draft", role: .destructive) {
@@ -73,50 +77,88 @@ public struct AddIcebreakerView: View {
         }
         .onAppear { prefillIfEditing() }
         .onChange(of: title) { _, _ in autoSaveDraft() }
-        .onChange(of: minParticipants) { _, _ in autoSaveDraft() }
-        .onChange(of: maxParticipants) { _, _ in autoSaveDraft() }
+        .onChange(of: selectedCategories) { _, _ in autoSaveDraft() }
+        .onChange(of: idealParticipants) { _, _ in autoSaveDraft() }
+        .onChange(of: durationMin) { _, _ in autoSaveDraft() }
+        .onChange(of: durationMax) { _, _ in autoSaveDraft() }
         .onChange(of: goal) { _, _ in autoSaveDraft() }
         .onChange(of: materials) { _, _ in autoSaveDraft() }
         .onChange(of: howToPlay) { _, _ in autoSaveDraft() }
     }
     
     // MARK: - Helpers
-    
+
+    /// Whether the form has anything a user would lose by dismissing — every field counts, not
+    /// just the text ones, so picking categories or typing a participant count without touching
+    /// Title/Goal/Instructions still triggers the discard confirmation (and still gets autosaved,
+    /// since `autoSaveDraft()` shares this same check).
+    private var hasUnsavedContent: Bool {
+        !title.isEmpty
+            || !goal.isEmpty
+            || !howToPlay.isEmpty
+            || !materials.isEmpty
+            || !selectedCategories.isEmpty
+            || idealParticipants != nil
+            || durationMin != 10
+            || durationMax != 20
+    }
+
+    private func handleCancelTapped() {
+        if hasUnsavedContent {
+            showDismissDialog = true
+        } else {
+            dismiss()
+        }
+    }
+
     private func prefillIfEditing() {
         if let activity = activityToEdit {
             title = activity.name
             goal = activity.goal
             howToPlay = activity.howToPlay
             materials = activity.possibleProperties.filter { $0 != "-" }
-            
-            let parts = activity.participants.split(separator: "-").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            if parts.count == 2 {
-                minParticipants = parts[0]
-                maxParticipants = parts[1]
-            } else if let single = parts.first {
-                minParticipants = single
-                maxParticipants = single
-            }
+            idealParticipants = activity.participants
+            selectedCategories = Set(activity.categories)
+            (durationMin, durationMax) = Self.parseDuration(activity.duration)
         } else if let draft = draftToEdit {
             title = draft.name
-            minParticipants = draft.minParticipants
-            maxParticipants = draft.maxParticipants
+            idealParticipants = draft.participants
+            selectedCategories = Set(draft.categories)
+            (durationMin, durationMax) = Self.parseDuration(draft.duration)
             goal = draft.goal
             howToPlay = draft.howToPlay
             materials = draft.possibleProperties
         }
     }
-    
+
+    /// Recovers the minute range this view's Minimum/Maximum fields need from a stored duration
+    /// string like "10-20 minutes" or "15 minutes"; falls back to a sensible default when the
+    /// string carries no numbers (e.g. the "-" placeholder).
+    private static func parseDuration(_ duration: String) -> (min: Int, max: Int) {
+        let numbers = duration
+            .components(separatedBy: CharacterSet.decimalDigits.inverted)
+            .compactMap { Int($0) }
+        guard let first = numbers.first else { return (10, 20) }
+        let last = numbers.last ?? first
+        return (min(first, last), max(first, last))
+    }
+
+    private func composedDuration() -> String {
+        durationMin == durationMax ? "\(durationMin) minutes" : "\(durationMin)-\(durationMax) minutes"
+    }
+
     private func autoSaveDraft() {
         // Only auto-save if we are not editing an existing icebreaker
         guard !isEditMode else { return }
         // Do not auto-save if all fields are empty
-        guard !title.isEmpty || !goal.isEmpty || !howToPlay.isEmpty || !materials.isEmpty else { return }
-        
+        guard hasUnsavedContent else { return }
+
+        let finalParticipants = idealParticipants ?? 10
         if let draft = draftToEdit {
             draft.name = title
-            draft.minParticipants = minParticipants
-            draft.maxParticipants = maxParticipants
+            draft.participants = finalParticipants
+            draft.duration = composedDuration()
+            draft.categories = Array(selectedCategories)
             draft.goal = goal
             draft.howToPlay = howToPlay
             draft.possibleProperties = materials
@@ -124,8 +166,9 @@ public struct AddIcebreakerView: View {
         } else {
             let newDraft = DraftActivity(
                 name: title,
-                minParticipants: minParticipants,
-                maxParticipants: maxParticipants,
+                participants: finalParticipants,
+                duration: composedDuration(),
+                categories: Array(selectedCategories),
                 goal: goal,
                 howToPlay: howToPlay,
                 possibleProperties: materials
@@ -134,25 +177,30 @@ public struct AddIcebreakerView: View {
             draftToEdit = newDraft // So subsequent edits update the same draft
         }
     }
-    
+
     private func saveIcebreaker() {
-        let participantString = minParticipants == maxParticipants ? "\(minParticipants)" : "\(minParticipants)-\(maxParticipants)"
+        let finalParticipants = idealParticipants ?? 10
+        let categories = Array(selectedCategories)
         if isEditMode, let original = activityToEdit {
             original.name = title
-            original.participants = participantString
+            original.participants = finalParticipants
+            original.duration = composedDuration()
+            original.categories = categories
             original.goal = goal
             original.howToPlay = howToPlay
             original.possibleProperties = materials
         } else {
             let newIcebreaker = Activity(
                 name: title,
-                participants: participantString,
+                participants: finalParticipants,
+                duration: composedDuration(),
+                categories: categories,
                 goal: goal,
                 howToPlay: howToPlay,
                 possibleProperties: materials
             )
             context.insert(newIcebreaker)
-            
+
             // Clean up the draft if it was saved
             if let draft = draftToEdit {
                 context.delete(draft)
@@ -180,26 +228,55 @@ public struct AddIcebreakerView: View {
             Text("Title")
                 .font(.subheadline)
                 .fontWeight(.bold)
-            
-            TextField("Required", text: $title)
+
+            TextField("Give your activity a title", text: $title)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
         }
     }
-    
-    private var participantSection: some View {
+
+    private var categorySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Participant")
+            Text("Categories")
                 .font(.subheadline)
                 .fontWeight(.bold)
-            
+
+            CategoryChipEditor(selectedCategories: $selectedCategories)
+        }
+    }
+
+    private var participantSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Ideal Number of Participant")
+                .font(.subheadline)
+                .fontWeight(.bold)
+
+            TextField("e.g. 50", value: $idealParticipants, format: .number)
+                .keyboardType(.numberPad)
+                .padding()
+                .background(grayBackground)
+                .cornerRadius(20)
+        }
+    }
+
+    private var durationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                Text("Duration Activity")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                Text("(minutes)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
             VStack(spacing: 0) {
                 HStack {
                     Text("Minimum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("", value: $minParticipants, format: .number)
+                    TextField("", value: $durationMin, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
@@ -208,14 +285,14 @@ public struct AddIcebreakerView: View {
                         .cornerRadius(8)
                 }
                 .padding()
-                
+
                 Divider().padding(.horizontal)
-                
+
                 HStack {
                     Text("Maximum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("", value: $maxParticipants, format: .number)
+                    TextField("", value: $durationMax, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
@@ -227,41 +304,46 @@ public struct AddIcebreakerView: View {
             }
             .background(grayBackground)
             .cornerRadius(20)
-            .onChange(of: minParticipants) { _, newValue in
-                if newValue > 100 { minParticipants = 100 }
-                else if newValue < 1 { minParticipants = 1 }
-                
-                if maxParticipants < minParticipants {
-                    maxParticipants = minParticipants
+            .onChange(of: durationMin) { _, newValue in
+                if newValue > 500 { durationMin = 500 }
+                else if newValue < 1 { durationMin = 1 }
+
+                if durationMax < durationMin {
+                    durationMax = durationMin
                 }
             }
-            .onChange(of: maxParticipants) { _, newValue in
-                if newValue > 100 { maxParticipants = 100 }
-                else if newValue < minParticipants { maxParticipants = minParticipants }
+            .onChange(of: durationMax) { _, newValue in
+                if newValue > 500 { durationMax = 500 }
+                else if newValue < durationMin { durationMax = durationMin }
             }
         }
     }
-    
+
     private var goalSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Goal")
                 .font(.subheadline)
                 .fontWeight(.bold)
-            
-            TextField("Required", text: $goal, axis: .vertical)
+
+            TextField("What should participants achieve?", text: $goal, axis: .vertical)
                 .lineLimit(4...8)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
         }
     }
-    
+
     private var materialSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Material")
-                .font(.subheadline)
-                .fontWeight(.bold)
-            
+            HStack(spacing: 4) {
+                Text("Material")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                Text("(optional)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
             VStack(alignment: .leading, spacing: 12) {
                 if !materials.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
@@ -280,9 +362,9 @@ public struct AddIcebreakerView: View {
                     }
                     .padding(.bottom, 8)
                 }
-                
+
                 HStack {
-                    TextField("Optional", text: $newMaterial)
+                    TextField("e.g. Stickers, paper, etc.", text: $newMaterial)
                         .focused($isMaterialFieldFocused)
                         .submitLabel(.done)
                         .onSubmit {
@@ -294,7 +376,7 @@ public struct AddIcebreakerView: View {
                                 isMaterialFieldFocused = true
                             }
                         }
-                    
+
                     if isMaterialFieldFocused {
                         Button(action: {
                             let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -316,14 +398,14 @@ public struct AddIcebreakerView: View {
             .cornerRadius(20)
         }
     }
-    
+
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("How to Play")
+            Text("Instructions")
                 .font(.subheadline)
                 .fontWeight(.bold)
-            
-            TextField("Required", text: $howToPlay, axis: .vertical)
+
+            TextField("Describe how to run this activity", text: $howToPlay, axis: .vertical)
                 .lineLimit(6...12)
                 .padding()
                 .background(grayBackground)
@@ -334,26 +416,17 @@ public struct AddIcebreakerView: View {
     @ToolbarContentBuilder
     private var toolBarSection: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
-            Button(action: { showDismissDialog = true }) {
+            Button {
+                handleCancelTapped()
+            } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundColor(.white)
             }
-            .buttonStyle(.borderedProminent)
-            .frame(width: 30, height: 30)
-            .tint(Color.gray.opacity(0.3))
-            .buttonBorderShape(.circle)
         }
-        
+
         ToolbarItem(placement: .confirmationAction) {
             Button(action: saveIcebreaker) {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 18, weight: .regular))
             }
-            .buttonStyle(.borderedProminent)
-            .frame(width: 30, height: 30)
-            .tint(Color("PrimaryAccentColor"))
-            .buttonBorderShape(.circle)
             .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
         }
     }

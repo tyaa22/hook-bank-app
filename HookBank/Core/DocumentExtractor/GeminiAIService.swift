@@ -51,7 +51,9 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     /// only constructed back on the caller's side once every page has finished.
     private struct ExtractedActivityData: Sendable {
         let name: String
-        let participants: String
+        let participants: Int
+        let duration: String
+        let categories: [String]
         let goal: String
         let howToPlay: String
         let possibleProperties: [String]
@@ -61,34 +63,37 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     private struct ExtractionResponse: Codable {
         let activities: [ExtractedActivityItem]?
     }
-    
+
     private struct ExtractedActivityItem: Codable {
         let name: String?
         let goal: String?
         let howToPlay: String?
         let property: [String]?
         let singleProperty: String?
-        let participant: String?
-        let participants: String?
-        
+        let idealParticipants: Int?
+        let duration: String?
+        let category: [String]?
+
         enum CodingKeys: String, CodingKey {
             case name
             case goal
             case howToPlay
             case property
             case singleProperty = "properties"
-            case participant
-            case participants
+            case idealParticipants
+            case duration
+            case category
         }
-        
+
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             self.name = try container.decodeIfPresent(String.self, forKey: .name)
             self.goal = try container.decodeIfPresent(String.self, forKey: .goal)
             self.howToPlay = try container.decodeIfPresent(String.self, forKey: .howToPlay)
-            self.participant = try container.decodeIfPresent(String.self, forKey: .participant)
-            self.participants = try container.decodeIfPresent(String.self, forKey: .participants)
-            
+            self.idealParticipants = try container.decodeIfPresent(Int.self, forKey: .idealParticipants)
+            self.duration = try container.decodeIfPresent(String.self, forKey: .duration)
+            self.category = try container.decodeIfPresent([String].self, forKey: .category)
+
             // Handle property as either [String] or String
             if let stringArray = try? container.decodeIfPresent([String].self, forKey: .property) {
                 self.property = stringArray
@@ -126,8 +131,21 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
                     items: Schema.string(description: "Name of required equipment, tools, or materials"),
                     description: "List of required equipment, tools, or materials (example: ['Bingo Card', 'Marker', 'Paper']). If don't need any tools, provide an empty array or ['-']."
                 ),
-                "participant": Schema.string(
-                    description: "Total participant (example: '10-20', '4-6'). If not found, fill it with '-'."
+                "idealParticipants": Schema.integer(
+                    description: "The ideal number of participants this activity is designed for, facilitated by a single educator — not a min/max range, and with no minimum. If the document states a maximum participant count, use that number as the ideal. If nothing is stated, estimate a realistic ideal group size for one facilitator based on the activity's nature (e.g. 10).",
+                    minimum: 1,
+                    maximum: 200
+                ),
+                "duration": Schema.string(
+                    description: "How long the activity takes, formatted like '10 minutes' or '10-20 minutes'. If the document explicitly states a duration, use it. If not stated, estimate a realistic duration (or range) based on the activity's steps and complexity."
+                ),
+                "category": Schema.array(
+                    items: Schema.enumeration(
+                        values: ActivityCategory.allCases.map(\.rawValue),
+                        description: "One of the 7 fixed hook-activity categories."
+                    ),
+                    description: "One or more categories that best fit this activity, chosen strictly from the 7 allowed values. Include every category that genuinely applies; if only one applies, return just that one.",
+                    minItems: 1
                 )
             ]
         )
@@ -218,6 +236,8 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
                 Activity(
                     name: data.name,
                     participants: data.participants,
+                    duration: data.duration,
+                    categories: data.categories,
                     goal: data.goal,
                     howToPlay: data.howToPlay,
                     possibleProperties: data.possibleProperties
@@ -298,8 +318,10 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         2. 'goal': The purpose of the activity in terms of enhancing learner engagement, critical thinking, or focus before the core material begins.
         3. 'howToPlay': Clear, sequential, step-by-step instructions on how to conduct the activity.
         4. 'property': A list of required equipment, tools, or materials (array of strings). If no tools are needed, return [] or ["-"].
-        5. 'participant': The recommended number of participants or group size (e.g., "10-20 people", "4-6 people (per team)", "Entire class"). If not specified, use "-".
-                
+        5. 'idealParticipants': The ideal group size for this activity when run by a single facilitator/educator — a single number, not a range, and with no minimum. If the document states a maximum participant count, use that as the ideal number. If nothing is stated, analyze the activity and estimate a realistic ideal group size.
+        6. 'duration': How long the activity takes, formatted like "10 minutes" or "10-20 minutes". Use the document's stated duration if present; otherwise analyze the activity's steps and estimate a realistic duration.
+        7. 'category': Classify the activity into one or more of exactly these 7 categories: "Leadership", "Connection", "Just Fun", "Energizer", "Reflection", "Communication", "Critical Thinking". Pick every category that genuinely fits — if the activity clearly serves more than one purpose, include all of them; if it only fits one, return just that one. Never invent a category outside this list.
+
         If the page contains no activities, return a JSON object with 'activities': [].
         """
         
@@ -359,6 +381,10 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
         return []
     }
 
+    /// Default ideal group size used when Gemini omits `idealParticipants` (schema requires it, but
+    /// a model can still skip a field on a malformed response).
+    private static let defaultIdealParticipants = 10
+
     private func mapItemsToData(_ items: [ExtractedActivityItem]) -> [ExtractedActivityData] {
         return items.compactMap { item in
             guard let name = item.name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
@@ -367,7 +393,13 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
 
             let goal = item.goal?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "-"
             let howToPlay = item.howToPlay?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "-"
-            let participant = item.participant ?? item.participants ?? "-"
+            let participants = item.idealParticipants.map { max(1, $0) } ?? Self.defaultIdealParticipants
+            let duration = item.duration?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // Keep only categories Gemini actually returned from the fixed 7, in case a fallback
+            // model ignores the enum constraint and free-types something close but not exact.
+            let validCategories = Set(ActivityCategory.allCases.map(\.rawValue))
+            let categories = (item.category ?? []).filter { validCategories.contains($0) }
 
             var properties: [String] = []
             if let props = item.property {
@@ -379,7 +411,9 @@ public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
 
             return ExtractedActivityData(
                 name: name,
-                participants: participant.isEmpty ? "-" : participant,
+                participants: participants,
+                duration: (duration?.isEmpty ?? true) ? "-" : duration!,
+                categories: categories,
                 goal: goal.isEmpty ? "-" : goal,
                 howToPlay: howToPlay.isEmpty ? "-" : howToPlay,
                 possibleProperties: properties
