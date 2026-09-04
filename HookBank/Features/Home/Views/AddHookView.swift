@@ -22,6 +22,7 @@ public struct AddIcebreakerView: View {
     @State private var materials: [String] = []
     @State private var newMaterial: String = ""
     @FocusState private var isMaterialFieldFocused: Bool
+    @State private var materialDebounceTask: Task<Void, Never>? = nil
     
     // Instructions
     @State private var howToPlay: String = ""
@@ -372,25 +373,42 @@ public struct AddIcebreakerView: View {
                             if !trimmed.isEmpty && !materials.contains(trimmed) {
                                 materials.append(trimmed)
                                 newMaterial = ""
-                                // Keep the field focused to allow adding multiple materials quickly
                                 isMaterialFieldFocused = true
                             }
                         }
-
-                    if isMaterialFieldFocused {
-                        Button(action: {
-                            let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !trimmed.isEmpty && !materials.contains(trimmed) {
-                                materials.append(trimmed)
-                                newMaterial = ""
+                        .onChange(of: newMaterial) { _, newValue in
+                            materialDebounceTask?.cancel()
+                            
+                            guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                            
+                            materialDebounceTask = Task {
+                                try? await Task.sleep(nanoseconds: 700_000_000) // 0.7s delay
+                                guard !Task.isCancelled else { return }
+                                
+                                await MainActor.run {
+                                    let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    if !trimmed.isEmpty && !materials.contains(trimmed) {
+                                        materials.append(trimmed)
+                                        newMaterial = ""
+                                    }
+                                }
                             }
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
                         }
-                        .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
+
+//                    if isMaterialFieldFocused {
+//                        Button(action: {
+//                            let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+//                            if !trimmed.isEmpty && !materials.contains(trimmed) {
+//                                materials.append(trimmed)
+//                                newMaterial = ""
+//                            }
+//                        }) {
+//                            Image(systemName: "plus.circle.fill")
+//                                .font(.system(size: 24))
+//                                .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
+//                        }
+//                        .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+//                    }
                 }
             }
             .padding()
