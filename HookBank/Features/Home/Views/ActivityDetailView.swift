@@ -16,6 +16,15 @@ struct ActivityDetailView: View {
     private let bg = Color("CardBackgroundColor")
     private let cardBG = Color.white
 
+    private var metadataAccessibilityLabel: String {
+        let participantText = activity.participants == 1 ? "1 person" : "\(activity.participants) people"
+        if activity.duration != "-" {
+            return "Ideal participants: \(participantText), Duration: \(activity.duration)"
+        } else {
+            return "Ideal participants: \(participantText)"
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             bg.ignoresSafeArea()
@@ -28,6 +37,7 @@ struct ActivityDetailView: View {
                         Text(activity.name)
                             .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.black)
+                            .accessibilityAddTraits(.isHeader)
 
                         HStack(spacing: 16) {
                             HStack(spacing: 6) {
@@ -46,6 +56,8 @@ struct ActivityDetailView: View {
                         }
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(Color.gray)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(metadataAccessibilityLabel)
 
                         if !activity.categories.isEmpty {
                             FlowLayout(spacing: 8) {
@@ -60,6 +72,8 @@ struct ActivityDetailView: View {
                                 }
                             }
                             .padding(.top, 4)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Categories: \(activity.categories.joined(separator: ", "))")
                         }
                     }
                     .padding(.horizontal, 20)
@@ -91,10 +105,13 @@ struct ActivityDetailView: View {
                                         Text("·")
                                             .font(.system(size: 16, weight: .bold))
                                             .foregroundColor(.secondary)
+                                            .accessibilityHidden(true)
                                         Text(item)
                                             .font(.system(size: 15))
                                             .foregroundColor(.primary)
                                     }
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityLabel(item)
                                 }
                             }
                         }
@@ -125,6 +142,8 @@ struct ActivityDetailView: View {
                 } label: {
                     Image(systemName: "pencil")
                 }
+                .accessibilityLabel("Edit Icebreaker")
+                .accessibilityHint("Opens the edit screen for this activity")
             }
             
             ToolbarItem(placement: .topBarTrailing) {
@@ -134,6 +153,8 @@ struct ActivityDetailView: View {
                     Image(systemName: "trash")
                         .foregroundColor(.red)
                 }
+                .accessibilityLabel("Delete Icebreaker")
+                .accessibilityHint("Prompts to delete this activity")
             }
         }
         .navigationDestination(isPresented: $showEditPage) {
@@ -178,10 +199,15 @@ private struct SectionCard<Content: View>: View {
                         .foregroundColor(.white)
                         .font(.system(size: 13, weight: .semibold))
                 }
+                .accessibilityHidden(true)
+
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.black)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+
             content()
         }
         .padding(16)

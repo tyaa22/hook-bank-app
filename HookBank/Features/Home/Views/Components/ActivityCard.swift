@@ -10,6 +10,21 @@ struct ActivityCard: View {
 
     private var accentColor: Color { Color("PrimaryAccentColor") }
 
+    private var accessibilityCardLabel: String {
+        var components: [String] = []
+        components.append("Activity title: \(activity.name)")
+        let participantText = activity.participants == 1 ? "1 person" : "\(activity.participants) person"
+        components.append("ideal participant \(participantText)")
+        components.append("duration \(activity.duration)")
+        if !activity.goal.isEmpty {
+            components.append("goal \(activity.goal)")
+        }
+        if !activity.categories.isEmpty {
+            components.append("category: \(activity.categories.joined(separator: ", "))")
+        }
+        return components.joined(separator: ", ")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
@@ -55,6 +70,10 @@ struct ActivityCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(red: 0.949, green: 0.949, blue: 0.969, opacity: 1.00))
         .cornerRadius(12)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityCardLabel)
+        .accessibilityHint("Double tap to open")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var categoryChips: some View {

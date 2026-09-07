@@ -39,12 +39,15 @@ public struct ImportPDFView: View {
                         .background(grayBackground)
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Close")
+                .accessibilityHint("Dismisses the import PDF screen")
 
                 Spacer()
 
                 Text("Import PDF")
                     .font(.headline)
                     .fontWeight(.semibold)
+                    .accessibilityAddTraits(.isHeader)
 
                 Spacer()
 
@@ -52,6 +55,7 @@ public struct ImportPDFView: View {
                 Circle()
                     .frame(width: 32, height: 32)
                     .opacity(0)
+                    .accessibilityHidden(true)
             }
             .padding()
 
@@ -143,6 +147,8 @@ public struct ImportPDFView: View {
                     .font(.body)
                     .foregroundColor(.gray)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("No PDF selected. Choose a PDF to get started.")
 
         case .extracting(let filename):
             VStack(spacing: 16) {
@@ -167,22 +173,29 @@ public struct ImportPDFView: View {
             .background(grayBackground)
             .cornerRadius(12)
             .padding(.horizontal, 20)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reading PDF: \(filename)")
 
         case .extracted(let filename):
+            let pageCount = viewModel.extractedPages.count
+            let pageText = pageCount == 1 ? "1 page extracted" : "\(pageCount) pages extracted"
             HStack(alignment: .center) {
-                Image(systemName: "doc.fill")
-                    .foregroundColor(orangeColor)
-                    .font(.title2)
-                    .padding(.trailing, 8)
+                HStack(alignment: .center, spacing: 12) {
+                    Image(systemName: "doc.fill")
+                        .foregroundColor(orangeColor)
+                        .font(.title2)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(filename)
-                        .font(.body)
-                        .foregroundColor(.black)
-                    Text("\(viewModel.extractedPages.count) page\(viewModel.extractedPages.count == 1 ? "" : "s") extracted")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(filename)
+                            .font(.body)
+                            .foregroundColor(.black)
+                        Text(pageText)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("PDF file: \(filename), \(pageText)")
 
                 Spacer()
 
@@ -196,6 +209,8 @@ public struct ImportPDFView: View {
                         .foregroundColor(.red)
                         .font(.title2)
                 }
+                .accessibilityLabel("Remove PDF file \(filename)")
+                .accessibilityHint("Double tap to remove this file")
             }
             .padding()
             .background(grayBackground)
@@ -203,6 +218,7 @@ public struct ImportPDFView: View {
             .padding(.horizontal, 20)
 
         case .analyzing:
+            let progressText = "\(viewModel.currentPageImporting) of \(viewModel.totalPagesImporting) pages processed"
             VStack(spacing: 16) {
                 HStack {
                     Image(systemName: "sparkles")
@@ -230,7 +246,7 @@ public struct ImportPDFView: View {
                         }
                     }
                     .frame(height: 6)
-                    Text("\(viewModel.currentPageImporting) of \(viewModel.totalPagesImporting) pages processed")
+                    Text(progressText)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -239,6 +255,8 @@ public struct ImportPDFView: View {
             .background(grayBackground)
             .cornerRadius(12)
             .padding(.horizontal, 20)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Analyzing with AI, \(progressText)")
 
         case .error(let message):
             VStack(spacing: 8) {
@@ -254,6 +272,8 @@ public struct ImportPDFView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Error: Something went wrong. \(message)")
         }
     }
 
@@ -272,6 +292,8 @@ public struct ImportPDFView: View {
                     .background(orangeColor)
                     .cornerRadius(30)
             }
+            .accessibilityLabel("Choose PDF file")
+            .accessibilityHint("Opens document picker to select a PDF")
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
 
@@ -289,6 +311,8 @@ public struct ImportPDFView: View {
                 .cornerRadius(30)
             }
             .disabled(true)
+            .accessibilityLabel("Import PDF")
+            .accessibilityHint("Disabled. Currently processing PDF")
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
 
@@ -310,6 +334,8 @@ public struct ImportPDFView: View {
                 .background(orangeColor)
                 .cornerRadius(30)
             }
+            .accessibilityLabel("Import PDF activities with AI")
+            .accessibilityHint("Starts AI analysis to extract activities from the PDF")
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
 
@@ -329,6 +355,8 @@ public struct ImportPDFView: View {
                     .background(orangeColor)
                     .cornerRadius(30)
             }
+            .accessibilityLabel("Try Again")
+            .accessibilityHint("Resets and opens document picker")
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }

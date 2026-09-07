@@ -60,6 +60,8 @@ public struct HomeView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(Color("PrimaryAccentColor"))
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(Text("Sparkleash"))
                         
                         Spacer()
                         
@@ -107,6 +109,8 @@ public struct HomeView: View {
                                             .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(.gray)
                                     }
+                                    .accessibilityElement(children: .combine)
+                                    .accessibilityLabel(Text("Icebreakers' Draft, double tap to see more"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .background(
                                         NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
@@ -200,15 +204,16 @@ public struct HomeView: View {
                             
                             ForEach(filteredActivities) { activity in
                                 if isSelectionMode {
+                                    let isSelected = selectedIcebreakers.contains(activity.id)
                                     Button {
-                                        if selectedIcebreakers.contains(activity.id) {
+                                        if isSelected {
                                             selectedIcebreakers.remove(activity.id)
                                         } else {
                                             selectedIcebreakers.insert(activity.id)
                                         }
                                     } label: {
                                         HStack(spacing: 12) {
-                                            if selectedIcebreakers.contains(activity.id) {
+                                            if isSelected {
                                                 Image(systemName: "checkmark.circle.fill")
                                                     .foregroundColor(Color("PrimaryAccentColor"))
                                                     .font(.system(size: 24))
@@ -221,7 +226,7 @@ public struct HomeView: View {
                                             ActivityCard(activity: activity)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: selectedIcebreakers.contains(activity.id) ? 2 : 0)
+                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: isSelected ? 2 : 0)
                                                 )
                                         }
                                     }
@@ -229,6 +234,10 @@ public struct HomeView: View {
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                     .listRowBackground(Color.clear)
+                                    .accessibilityElement(children: .ignore)
+                                    .accessibilityLabel(activity.name)
+                                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
+                                    .accessibilityHint(isSelected ? "Double tap to deselect" : "Double tap to select")
                                 } else {
                                     ActivityCard(activity: activity)
                                         .background(
@@ -396,6 +405,7 @@ public struct HomeView: View {
                         .disabled(selectedIcebreakers.isEmpty)
                     } else {
                         addIcebreakerMenu
+                            .accessibilityLabel(Text("Add Entry"))
                     }
                 }
             }
@@ -450,6 +460,8 @@ public struct HomeView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 36)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("No entries. To add an entry, tap the plus button."))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)

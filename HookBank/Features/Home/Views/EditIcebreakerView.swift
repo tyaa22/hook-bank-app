@@ -98,6 +98,12 @@ struct EditIcebreakerView: View {
             .tint(accent)
             .padding(.horizontal, 24)
             .padding(.bottom, 12)
+            .accessibilityLabel("Save changes")
+            .accessibilityHint(
+                title.isEmpty || goal.isEmpty || howToPlay.isEmpty
+                ? "Disabled. Fill in title, goal, and instructions to save."
+                : "Saves changes to this icebreaker"
+            )
             .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
         }
         .navigationTitle("Edit Icebreakers")
@@ -110,6 +116,8 @@ struct EditIcebreakerView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                 }
+                .accessibilityLabel("Back")
+                .accessibilityHint("Returns to previous screen or prompts to discard changes")
             }
         }
         .confirmationDialog(
@@ -168,6 +176,7 @@ struct EditIcebreakerView: View {
             Text("Categories")
                 .font(.subheadline)
                 .fontWeight(.bold)
+                .accessibilityAddTraits(.isHeader)
 
             CategoryChipEditor(selectedCategories: $selectedCategories)
         }
@@ -178,11 +187,14 @@ struct EditIcebreakerView: View {
             Text("Title")
                 .font(.subheadline)
                 .fontWeight(.bold)
+                .accessibilityAddTraits(.isHeader)
 
             TextField("Give your activity a title", text: $title)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
+                .accessibilityLabel("Activity title")
+                .accessibilityHint("Enter a name for the activity")
         }
     }
 
@@ -191,12 +203,16 @@ struct EditIcebreakerView: View {
             Text("Ideal Number of Participant")
                 .font(.subheadline)
                 .fontWeight(.bold)
+                .accessibilityAddTraits(.isHeader)
 
             TextField("e.g. 50", value: $idealParticipants, format: .number)
                 .keyboardType(.numberPad)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
+                .accessibilityLabel("Ideal number of participants")
+                .accessibilityValue(idealParticipants.map { "\($0) participants" } ?? "Not set")
+                .accessibilityHint("Enter the ideal number of participants")
         }
     }
 
@@ -210,19 +226,23 @@ struct EditIcebreakerView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 0) {
                 HStack {
                     Text("Minimum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("", value: $durationMin, format: .number)
+                    TextField("10", value: $durationMin, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .cornerRadius(8)
+                        .accessibilityLabel("Minimum duration")
+                        .accessibilityValue("\(durationMin) minutes")
                 }
                 .padding()
 
@@ -232,13 +252,15 @@ struct EditIcebreakerView: View {
                     Text("Maximum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("", value: $durationMax, format: .number)
+                    TextField("20", value: $durationMax, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .cornerRadius(8)
+                        .accessibilityLabel("Maximum duration")
+                        .accessibilityValue("\(durationMax) minutes")
                 }
                 .padding()
             }
@@ -264,12 +286,15 @@ struct EditIcebreakerView: View {
             Text("Goal")
                 .font(.subheadline)
                 .fontWeight(.bold)
+                .accessibilityAddTraits(.isHeader)
 
             TextField("What should participants achieve?", text: $goal, axis: .vertical)
                 .lineLimit(4...8)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
+                .accessibilityLabel("Goal")
+                .accessibilityHint("Describe what participants should achieve")
         }
     }
 
@@ -283,6 +308,8 @@ struct EditIcebreakerView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
 
             VStack(alignment: .leading, spacing: 12) {
                 if !materials.isEmpty {
@@ -297,6 +324,12 @@ struct EditIcebreakerView: View {
                                     Image(systemName: "minus.circle.fill")
                                         .foregroundColor(.red)
                                 }
+                                .accessibilityLabel("Remove \(material)")
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel(material)
+                            .accessibilityAction(named: "Remove") {
+                                materials.removeAll { $0 == material }
                             }
                         }
                     }
@@ -307,6 +340,8 @@ struct EditIcebreakerView: View {
                     TextField("e.g. Stickers, paper, etc.", text: $newMaterial)
                         .focused($isMaterialFieldFocused)
                         .submitLabel(.done)
+                        .accessibilityLabel("Add material")
+                        .accessibilityHint("Type a material name and press return to add")
                         .onSubmit {
                             let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !trimmed.isEmpty && !materials.contains(trimmed) {
@@ -328,6 +363,7 @@ struct EditIcebreakerView: View {
                                 .font(.system(size: 24))
                                 .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : accent)
                         }
+                        .accessibilityLabel("Add material to list")
                         .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
@@ -343,12 +379,15 @@ struct EditIcebreakerView: View {
             Text("Instructions")
                 .font(.subheadline)
                 .fontWeight(.bold)
+                .accessibilityAddTraits(.isHeader)
 
             TextField("Describe how to run this activity", text: $howToPlay, axis: .vertical)
                 .lineLimit(6...12)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
+                .accessibilityLabel("Instructions")
+                .accessibilityHint("Describe step by step how to run this activity")
         }
     }
 }
