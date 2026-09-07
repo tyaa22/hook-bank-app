@@ -20,9 +20,9 @@ class PDFExtractionViewModel: ObservableObject {
     private let importService: ActivityImportService
     private let extractor: DocumentTextExtracting
     
-    init(importService: ActivityImportService = .shared, extractor: DocumentTextExtracting = PDFTextExtractor()) {
-        self.importService = importService
-        self.extractor = extractor
+    init(importService: ActivityImportService? = nil, extractor: DocumentTextExtracting? = nil) {
+        self.importService = importService ?? .shared
+        self.extractor = extractor ?? PDFTextExtractor()
     }
     
     func handleFileSelection(result: Result<[URL], Error>) {
@@ -61,9 +61,11 @@ class PDFExtractionViewModel: ObservableObject {
         Task {
             do {
                 let count = try await importService.importActivities(from: extractedPages, modelContext: modelContext) { [weak self] current, total in
-                    guard let self = self else { return }
-                    self.currentPageImporting = current
-                    self.totalPagesImporting = total
+                    guard let self else { return }
+                    Task { @MainActor [self] in
+                        self.currentPageImporting = current
+                        self.totalPagesImporting = total
+                    }
                 }
                 self.importResult = .success(count)
             } catch {
