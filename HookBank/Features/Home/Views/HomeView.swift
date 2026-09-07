@@ -17,8 +17,6 @@ public struct HomeView: View {
     @State private var isSelectionMode: Bool = false
     @State private var selectedIcebreakers: Set<UUID> = []
     @State private var showDeleteConfirm : Bool = false
-    @State private var draftToDelete: DraftActivity?
-    @State private var activityToDelete: Activity?
     
     @State private var isSearchActive: Bool = false
     
@@ -48,75 +46,35 @@ public struct HomeView: View {
                     .onTapGesture {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
-                VStack(spacing: 0) {
-                    // Custom Toolbar
-                    HStack {
-                        HStack {
-                            Image("sparkleash_logo")
-                                .resizable()
-                                .frame(width: 40, height: 40)
-                            Text("Sparkleash")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(Color("PrimaryAccentColor"))
-                        }
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 8) {
-                            Button {
-                                withAnimation {
-                                    isSelectionMode.toggle()
-                                    if !isSelectionMode {
-                                        selectedIcebreakers.removeAll()
-                                    }
-                                }
-                            } label: {
-                                Text(isSelectionMode ? "Cancel" : "Select")
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.black)
-                                    .frame(width: isSelectionMode ? 60 : 44, height: 44)
-                                    .padding(.horizontal, isSelectionMode ? 10 : 15)
-                                    .clipShape(Capsule())
-                                    .glassEffect()
-                            }
-                            
-                            // Filter button                         }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
-                    
-                    if drafts.isEmpty && activities.isEmpty {
-                       emptyStateView
-                    }
-                    else {
-                        List {
+                if activities.isEmpty && drafts.isEmpty {
+                    emptyStateView
+                }
+                else {
+                    List {
                             // MARK: - Draft Icebreaker Section
-                            // Only show Draft Icebreaker section if there are actual drafts
-                            if !drafts.isEmpty {
-                                if !isSelectionMode && !isSearchActive {
-                                    HStack(spacing: 8) {
-                                        Text("Icebreakers' Draft")
-                                            .font(.title2)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.black)
-                                        
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.gray)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(
-                                        NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
-                                            EmptyView()
+                                // Only show Draft Icebreaker section if there are actual drafts
+                                if !drafts.isEmpty {
+                                    if !isSelectionMode && !isSearchActive {
+                                        HStack(spacing: 8) {
+                                            Text("Draft Icebreaker")
+                                                .font(.title2)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.black)
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundColor(.gray)
                                         }
-                                            .opacity(0)
-                                    )
-                                    .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
-                                    .listRowBackground(Color.clear)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(
+                                            NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
+                                                EmptyView()
+                                            }
+                                                .opacity(0)
+                                        )
+                                        .listRowSeparator(.hidden)
+                                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 4, trailing: 16))
+                                        .listRowBackground(Color.clear)
                                     ForEach(drafts.prefix(3)) { draft in
                                         Button {
                                             selectedDraft = draft
@@ -146,7 +104,7 @@ public struct HomeView: View {
                                         .listRowBackground(Color.clear)
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
-                                                draftToDelete = draft
+                                                context.delete(draft)
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -166,38 +124,37 @@ public struct HomeView: View {
                                                 Label("Edit", systemImage: "pencil")
                                             }
                                             Button(role: .destructive) {
-                                                draftToDelete = draft
+                                                context.delete(draft)
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
                                         }
                                     }
                                 }
-                                //                                    else {
-                                //                                    Text("No saved drafts")
-                                //                                        .font(.subheadline)
-                                //                                        .foregroundColor(.gray)
-                                //                                        .padding(.leading, 4)
-                                //                                        .listRowSeparator(.hidden)
-                                //                                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                                //                                        .listRowBackground(Color.clear)
-                                //                                }
+//                                    else {
+//                                    Text("No saved drafts")
+//                                        .font(.subheadline)
+//                                        .foregroundColor(.gray)
+//                                        .padding(.leading, 4)
+//                                        .listRowSeparator(.hidden)
+//                                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+//                                        .listRowBackground(Color.clear)
+//                                }
                             }
                             
                             // MARK: - List Icebreaker Section
-                            Text("All Icebreakers")
+                            Text("List Icebreaker")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
                                 .listRowBackground(Color.clear)
-                            
+
                             if activities.isEmpty {
                                 emptyStateView
-                                    .padding(.top, 100)
                             }
-                            
+
                             ForEach(filteredActivities) { activity in
                                 if isSelectionMode {
                                     Button {
@@ -243,7 +200,7 @@ public struct HomeView: View {
                                         .listRowBackground(Color.clear)
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
-                                                activityToDelete = activity
+                                                context.delete(activity)
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -263,7 +220,7 @@ public struct HomeView: View {
                                                 Label("Edit", systemImage: "pencil")
                                             }
                                             Button(role: .destructive) {
-                                                activityToDelete = activity
+                                                context.delete(activity)
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
@@ -272,66 +229,13 @@ public struct HomeView: View {
                                 }
                             }
                         }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .scrollDismissesKeyboard(.interactively)
-                        .confirmationDialog(
-                            "Delete Draft Icebreaker",
-                            isPresented: Binding(
-                                get: { draftToDelete != nil },
-                                set: { if !$0 { draftToDelete = nil } }
-                            ),
-                            titleVisibility: .visible
-                        ) {
-                            Button("Delete", role: .destructive) {
-                                if let draft = draftToDelete {
-                                    context.delete(draft)
-                                }
-                                draftToDelete = nil
-                            }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text("Are you sure you want to delete this draft icebreaker? \nThis action cannot be undone.")
-                        }
-                        .confirmationDialog(
-                            "Delete Icebreaker",
-                            isPresented: Binding(
-                                get: { activityToDelete != nil },
-                                set: { if !$0 { activityToDelete = nil } }
-                            ),
-                            titleVisibility: .visible
-                        ) {
-                            Button("Delete", role: .destructive) {
-                                if let activity = activityToDelete {
-                                    context.delete(activity)
-                                }
-                                activityToDelete = nil
-                            }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text("Are you sure you want to delete this icebreaker? \nThis action cannot be undone.")
-                        }
-                        .confirmationDialog(
-                            selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
-                            isPresented: $showDeleteConfirm,
-                            titleVisibility: .visible
-                        ) {
-                            Button("Delete", role: .destructive) {
-                                deleteSelectedIcebreakers()
-                            }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text(selectedIcebreakers.count > 1
-                                 ? "Are you sure you want to delete these \(selectedIcebreakers.count) icebreakers?\nThis action cannot be undone."
-                                 : "Are you sure you want to delete this icebreaker?\nThis action cannot be undone.")
-                        }
-                    }
-                    
-                    
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("Sparkleash")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .searchable(text: $searchText, tokens: $searchTokens, isPresented: $isSearchActive, prompt: "Search") { token in
                 Text(token.category)
             }
@@ -362,23 +266,23 @@ public struct HomeView: View {
                 }
             }
             .toolbar {
-                //                        if !activities.isEmpty {
-                //                            ToolbarItem(placement: .topBarTrailing) {
-                //                                Button {
-                //                                    withAnimation {
-                //                                        isSelectionMode.toggle()
-                //                                        if !isSelectionMode {
-                //                                            selectedIcebreakers.removeAll()
-                //                                        }
-                //                                    }
-                //                                } label: {
-                //                                    Text(isSelectionMode ? "Cancel" : "Select")
-                //                                }
-                //                            }
-                //                        }
-                
+                if !activities.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            withAnimation {
+                                isSelectionMode.toggle()
+                                if !isSelectionMode {
+                                    selectedIcebreakers.removeAll()
+                                }
+                            }
+                        } label: {
+                            Text(isSelectionMode ? "Cancel" : "Select")
+                        }
+                    }
+                }
+
                 DefaultToolbarItem(kind: .search, placement: .bottomBar)
-                
+
                 ToolbarItemGroup(placement: .bottomBar) {
                     Spacer()
                     
@@ -399,6 +303,20 @@ public struct HomeView: View {
                     }
                 }
             }
+            .confirmationDialog(
+                selectedIcebreakers.count > 1 ? "Delete \(selectedIcebreakers.count) Icebreakers?" : "Delete Icebreaker?",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Keep") {
+                    showDeleteConfirm = false
+                }
+                Button("Delete", role: .destructive) {
+                    deleteSelectedIcebreakers()
+                }
+            } message: {
+                Text("This action cannot be undone.")
+            }
             .sheet(isPresented: $showAddSheet, onDismiss: {
                 selectedDraft = nil
                 selectedActivity = nil
@@ -410,80 +328,78 @@ public struct HomeView: View {
                     .presentationDetents([.medium])
             }
             .toolbarBackground(.clear, for: .bottomBar)
-            
-            
         }
+        
+    }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 12) {
+            Image("home_logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 120, height: 120)
+                .padding(.bottom, 8)
+
+            Text("No Entries")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+
+            Text("To add an entry, tap the plus button")
+                .font(.subheadline)
+                .foregroundColor(Color("DescriptionColor"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 36)
+        }
+        .frame(maxWidth: .infinity, minHeight: 400, alignment: .center)
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+    
+    private var addIcebreakerMenu: some View {
+        Menu {
+            Button {
+                showAddSheet = true
+            } label: {
+                Label("Add Manually", systemImage: "pencil")
+            }
+            
+            Button {
+                showImportPDFSheet = true
+            } label: {
+                Label("Import PDF", systemImage: "doc.fill")
+            }
+        } label: {
+            Button(action: {}) {
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.white)
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(width: 30, height: 30)
+            .tint(Color("PrimaryAccentColor"))
+            .buttonBorderShape(.circle)
+        }
+        
     }
     
     private func deleteSelectedIcebreakers() {
-            for activity in activities where selectedIcebreakers.contains(activity.id) {
-                context.delete(activity)
-            }
-            selectedIcebreakers.removeAll()
-            isSelectionMode = false
+        for activity in activities where selectedIcebreakers.contains(activity.id) {
+            context.delete(activity)
         }
-        /// A search token representing "filter by this category" — renders as a removable pill inside the
-        /// search field (standard system behavior for `.searchable(text:tokens:...)`) once picked from the
-        /// "Icebreaker Categories" suggestions.
-        struct CategoryFilterToken: Identifiable, Hashable {
-            let id = UUID()
-            let category: String
-        }
-        
-        @ViewBuilder
-        private var emptyStateView: some View {
-            VStack(spacing: 12) {
-                Image("home_logo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 120, height: 120)
-                    .padding(.bottom, 8)
-                
-                Text("No Entries")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-                
-                Text("To add an entry, tap the plus button")
-                    .font(.subheadline)
-                    .foregroundColor(Color("DescriptionColor"))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 36)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-        }
-        
-        private var addIcebreakerMenu: some View {
-            Menu {
-                Button {
-                    showAddSheet = true
-                } label: {
-                    Label("Add Manually", systemImage: "pencil")
-                }
-                
-                Button {
-                    showImportPDFSheet = true
-                } label: {
-                    Label("Import PDF", systemImage: "doc.fill")
-                }
-            } label: {
-                Button(action: {}) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(.white)
-                }
-                .buttonStyle(.borderedProminent)
-                .frame(width: 30, height: 30)
-                .tint(Color("PrimaryAccentColor"))
-                .buttonBorderShape(.circle)
-            }
-            
-        }
-        
+        selectedIcebreakers.removeAll()
+        isSelectionMode = false
     }
+}
 
+/// A search token representing "filter by this category" — renders as a removable pill inside the
+/// search field (standard system behavior for `.searchable(text:tokens:...)`) once picked from the
+/// "Icebreaker Categories" suggestions.
+struct CategoryFilterToken: Identifiable, Hashable {
+    let id = UUID()
+    let category: String
+}
 
 #Preview {
     let container = try! ModelContainer(
@@ -494,7 +410,7 @@ public struct HomeView: View {
         container.mainContext.insert(activity)
     }
     container.mainContext.insert(DraftActivity(name: "Untitled Draft"))
-    
+
     return HomeView()
         .modelContainer(container)
 }
