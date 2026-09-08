@@ -6,7 +6,7 @@ public protocol LLMActivityExtracting: Sendable {
     func extractActivities(from pages: [String], progress: @escaping @Sendable (Int, Int) -> Void) async throws -> [Activity]
 }
 
-public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
+nonisolated public final class GeminiAIService: LLMActivityExtracting, @unchecked Sendable {
     public static let shared = GeminiAIService()
     
     /// Candidate models in order of priority. If a model encounters token limit / quota / busy, it automatically falls back to the next one.

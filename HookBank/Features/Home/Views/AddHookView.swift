@@ -229,14 +229,11 @@ public struct AddIcebreakerView: View {
             Text("Title")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .accessibilityAddTraits(.isHeader)
 
             TextField("Give your activity a title", text: $title)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
-                .accessibilityLabel("Activity title")
-                .accessibilityHint("Enter a name for the activity")
         }
     }
 
@@ -245,7 +242,6 @@ public struct AddIcebreakerView: View {
             Text("Categories")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .accessibilityAddTraits(.isHeader)
 
             CategoryChipEditor(selectedCategories: $selectedCategories)
         }
@@ -256,16 +252,12 @@ public struct AddIcebreakerView: View {
             Text("Ideal Number of Participant")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .accessibilityAddTraits(.isHeader)
 
             TextField("e.g. 50", value: $idealParticipants, format: .number)
                 .keyboardType(.numberPad)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
-                .accessibilityLabel("Ideal number of participants")
-                .accessibilityValue(idealParticipants.map { "\($0) participants" } ?? "Not set")
-                .accessibilityHint("Enter the ideal number of participants")
         }
     }
 
@@ -279,23 +271,19 @@ public struct AddIcebreakerView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
 
             VStack(spacing: 0) {
                 HStack {
                     Text("Minimum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("10", value: $durationMin, format: .number)
+                    TextField("", value: $durationMin, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .cornerRadius(8)
-                        .accessibilityLabel("Minimum duration")
-                        .accessibilityValue("\(durationMin) minutes")
                 }
                 .padding()
 
@@ -305,15 +293,13 @@ public struct AddIcebreakerView: View {
                     Text("Maximum")
                         .foregroundColor(Color(white: 0.7))
                     Spacer()
-                    TextField("20", value: $durationMax, format: .number)
+                    TextField("", value: $durationMax, format: .number)
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .cornerRadius(8)
-                        .accessibilityLabel("Maximum duration")
-                        .accessibilityValue("\(durationMax) minutes")
                 }
                 .padding()
             }
@@ -339,15 +325,12 @@ public struct AddIcebreakerView: View {
             Text("Goal")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .accessibilityAddTraits(.isHeader)
 
             TextField("What should participants achieve?", text: $goal, axis: .vertical)
                 .lineLimit(4...8)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
-                .accessibilityLabel("Goal")
-                .accessibilityHint("Describe what participants should achieve")
         }
     }
 
@@ -361,8 +344,6 @@ public struct AddIcebreakerView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
 
             VStack(alignment: .leading, spacing: 12) {
                 if !materials.isEmpty {
@@ -377,12 +358,6 @@ public struct AddIcebreakerView: View {
                                     Image(systemName: "minus.circle.fill")
                                         .foregroundColor(.red)
                                 }
-                                .accessibilityLabel("Remove \(material)")
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel(material)
-                            .accessibilityAction(named: "Remove") {
-                                materials.removeAll { $0 == material }
                             }
                         }
                     }
@@ -393,8 +368,6 @@ public struct AddIcebreakerView: View {
                     TextField("e.g. Stickers, paper, etc.", text: $newMaterial)
                         .focused($isMaterialFieldFocused)
                         .submitLabel(.done)
-                        .accessibilityLabel("Add material")
-                        .accessibilityHint("Type a material name and press return to add")
                         .onSubmit {
                             let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !trimmed.isEmpty && !materials.contains(trimmed) {
@@ -421,6 +394,21 @@ public struct AddIcebreakerView: View {
                                 }
                             }
                         }
+
+//                    if isMaterialFieldFocused {
+//                        Button(action: {
+//                            let trimmed = newMaterial.trimmingCharacters(in: .whitespacesAndNewlines)
+//                            if !trimmed.isEmpty && !materials.contains(trimmed) {
+//                                materials.append(trimmed)
+//                                newMaterial = ""
+//                            }
+//                        }) {
+//                            Image(systemName: "plus.circle.fill")
+//                                .font(.system(size: 24))
+//                                .foregroundColor(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.5) : Color("PrimaryAccentColor"))
+//                        }
+//                        .disabled(newMaterial.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+//                    }
                 }
             }
             .padding()
@@ -434,15 +422,12 @@ public struct AddIcebreakerView: View {
             Text("Instructions")
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .accessibilityAddTraits(.isHeader)
 
             TextField("Describe how to run this activity", text: $howToPlay, axis: .vertical)
                 .lineLimit(6...12)
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
-                .accessibilityLabel("Instructions")
-                .accessibilityHint("Describe step by step how to run this activity")
         }
     }
     
@@ -454,20 +439,12 @@ public struct AddIcebreakerView: View {
             } label: {
                 Image(systemName: "xmark")
             }
-            .accessibilityLabel("Cancel")
-            .accessibilityHint("Dismisses the form or prompts to save draft")
         }
 
         ToolbarItem(placement: .confirmationAction) {
             Button(action: saveIcebreaker) {
                 Image(systemName: "checkmark")
             }
-            .accessibilityLabel(isEditMode ? "Save changes" : "Save Icebreaker")
-            .accessibilityHint(
-                title.isEmpty || goal.isEmpty || howToPlay.isEmpty
-                ? "Disabled. Fill in title, goal, and instructions to save."
-                : "Saves this icebreaker activity"
-            )
             .disabled(title.isEmpty || goal.isEmpty || howToPlay.isEmpty)
         }
     }

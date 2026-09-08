@@ -33,12 +33,29 @@ public struct HomeView: View {
         if let category = searchTokens.first?.category {
             result = result.filter { $0.categories.contains(category) }
         }
-        if !searchText.isEmpty {
-            result = NLSearchService.shared.search(query: searchText, activities: result)
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            result = result.filter { activity in
+                activity.name.localizedStandardContains(trimmed)
+                || activity.goal.localizedStandardContains(trimmed)
+                || activity.howToPlay.localizedStandardContains(trimmed)
+                || activity.possibleProperties.joined(separator: " ").localizedStandardContains(trimmed)
+                || activity.categories.contains { $0.localizedStandardContains(trimmed) }
+                || String(activity.participants).localizedStandardContains(trimmed)
+                || activity.duration.localizedStandardContains(trimmed)
+            }
         }
         return result
     }
-    
+
+    /// What to show inside `ContentUnavailableView.search(text:)` — the typed query when there is
+    /// one, otherwise the picked category, so browsing "Connection" with zero matches still reads
+    /// as "No Results for 'Connection'" instead of an empty, quote-less title.
+    private var searchDisplayText: String {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? (searchTokens.first?.category ?? "") : trimmed
+    }
+
     public var body: some View {
         NavigationStack {
             ZStack {
@@ -60,8 +77,6 @@ public struct HomeView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(Color("PrimaryAccentColor"))
                         }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel(Text("Sparkleash"))
                         
                         Spacer()
                         
@@ -109,8 +124,6 @@ public struct HomeView: View {
                                             .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(.gray)
                                     }
-                                    .accessibilityElement(children: .combine)
-                                    .accessibilityLabel(Text("Icebreakers' Draft, double tap to see more"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .background(
                                         NavigationLink(destination: DraftsListView(viewModel: viewModel)) {
@@ -200,20 +213,24 @@ public struct HomeView: View {
                             if activities.isEmpty {
                                 emptyStateView
                                     .padding(.top, 100)
+                            } else if filteredActivities.isEmpty {
+                                ContentUnavailableView.search(text: searchDisplayText)
+                                    .padding(.top, 100)
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
                             }
-                            
+
                             ForEach(filteredActivities) { activity in
                                 if isSelectionMode {
-                                    let isSelected = selectedIcebreakers.contains(activity.id)
                                     Button {
-                                        if isSelected {
+                                        if selectedIcebreakers.contains(activity.id) {
                                             selectedIcebreakers.remove(activity.id)
                                         } else {
                                             selectedIcebreakers.insert(activity.id)
                                         }
                                     } label: {
                                         HStack(spacing: 12) {
-                                            if isSelected {
+                                            if selectedIcebreakers.contains(activity.id) {
                                                 Image(systemName: "checkmark.circle.fill")
                                                     .foregroundColor(Color("PrimaryAccentColor"))
                                                     .font(.system(size: 24))
@@ -226,7 +243,7 @@ public struct HomeView: View {
                                             ActivityCard(activity: activity)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: isSelected ? 2 : 0)
+                                                        .stroke(Color("PrimaryAccentColor"), lineWidth: selectedIcebreakers.contains(activity.id) ? 2 : 0)
                                                 )
                                         }
                                     }
@@ -234,10 +251,6 @@ public struct HomeView: View {
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                                     .listRowBackground(Color.clear)
-                                    .accessibilityElement(children: .ignore)
-                                    .accessibilityLabel(activity.name)
-                                    .accessibilityValue(isSelected ? "Selected" : "Not selected")
-                                    .accessibilityHint(isSelected ? "Double tap to deselect" : "Double tap to select")
                                 } else {
                                     ActivityCard(activity: activity)
                                         .background(
@@ -341,11 +354,11 @@ public struct HomeView: View {
                 
             }
             .toolbar(.hidden, for: .navigationBar)
-            .searchable(text: $searchText, tokens: $searchTokens, isPresented: $isSearchActive, prompt: "Search") { token in
+            .searchable(text: $searchText, tokens: $searchTokens, isPresented: $isSearchActive, prompt: "Name, Category, or Participants") { token in
                 Text(token.category)
             }
             .searchSuggestions {
-                if searchTokens.isEmpty {
+                if searchTokens.isEmpty && searchText.isEmpty {
                     Section("Icebreaker Categories") {
                         ForEach(ActivityCategory.allCases, id: \.self) { category in
                             Button {
@@ -405,7 +418,6 @@ public struct HomeView: View {
                         .disabled(selectedIcebreakers.isEmpty)
                     } else {
                         addIcebreakerMenu
-                            .accessibilityLabel(Text("Add Entry"))
                     }
                 }
             }
@@ -460,8 +472,6 @@ public struct HomeView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 36)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text("No entries. To add an entry, tap the plus button."))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
