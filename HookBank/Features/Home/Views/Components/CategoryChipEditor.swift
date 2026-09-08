@@ -28,6 +28,7 @@ struct CategoryChipEditor: View {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 11, weight: .semibold))
                             }
+                            .accessibilityHidden(true)
                         }
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(accent)
@@ -35,6 +36,13 @@ struct CategoryChipEditor: View {
                         .padding(.vertical, 8)
                         .background(accent.opacity(0.15))
                         .clipShape(Capsule())
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(category) category")
+                        .accessibilityHint("Double tap to remove")
+                        .accessibilityAddTraits(.isButton)
+                        .onTapGesture {
+                            selectedCategories.remove(category)
+                        }
                     }
                 }
             }
@@ -46,6 +54,8 @@ struct CategoryChipEditor: View {
                 .padding()
                 .background(grayBackground)
                 .cornerRadius(20)
+                .accessibilityLabel("Add category")
+                .accessibilityHint("Type a category name or select from suggestions below")
 
             if isFieldFocused && !suggestions.isEmpty {
                 FlowLayout(spacing: 8) {
@@ -64,6 +74,8 @@ struct CategoryChipEditor: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Add \(suggestion) category")
+                        .accessibilityHint("Double tap to select this category")
                     }
                 }
             }
