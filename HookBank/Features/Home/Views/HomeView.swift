@@ -52,7 +52,7 @@ public struct HomeView: View {
                     // Custom Toolbar
                     HStack {
                         HStack {
-                            Image("sparkleash_logo")
+                            Image("sparkleash_title_logo")
                                 .resizable()
                                 .frame(width: 40, height: 40)
                             Text("Sparkleash")
@@ -433,7 +433,7 @@ public struct HomeView: View {
         @ViewBuilder
         private var emptyStateView: some View {
             VStack(spacing: 12) {
-                Image("home_logo")
+                Image("empty_state_logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 120, height: 120)
