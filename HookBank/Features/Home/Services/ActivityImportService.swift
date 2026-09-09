@@ -20,12 +20,26 @@ class ActivityImportService {
     ) async throws -> Int {
         let activities = try await llmService.extractActivities(from: pages, progress: progress)
         
+        let descriptor = FetchDescriptor<Activity>()
+        let existingActivities = (try? modelContext.fetch(descriptor)) ?? []
+        var existingNames = Set(
+            existingActivities.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        )
+
+        var insertedCount = 0
         for activity in activities {
-            modelContext.insert(activity)
+            let normalizedName = activity.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !normalizedName.isEmpty else { continue }
+
+            if !existingNames.contains(normalizedName) {
+                modelContext.insert(activity)
+                existingNames.insert(normalizedName)
+                insertedCount += 1
+            }
         }
         try modelContext.save()
         
-        return activities.count
+        return insertedCount
     }
 }
 

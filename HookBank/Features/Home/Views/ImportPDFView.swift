@@ -12,6 +12,7 @@ public struct ImportPDFView: View {
         case extracting(filename: String)
         case extracted(filename: String)
         case analyzing
+        case completed(summary: ImportSummary)
         case error(String)
     }
 
@@ -119,7 +120,7 @@ public struct ImportPDFView: View {
     
     private func handleDismissAttempt() {
         switch state {
-        case .empty, .error:
+        case .empty, .error, .completed:
             // Nothing to lose, just dismiss immediately
             dismiss()
         default:
@@ -223,8 +224,8 @@ public struct ImportPDFView: View {
                                 .fill(orangeColor)
                                 .frame(
                                     width: viewModel.totalPagesImporting > 0
-                                        ? geometry.size.width * CGFloat(viewModel.currentPageImporting) / CGFloat(viewModel.totalPagesImporting)
-                                        : 0,
+                                         ? geometry.size.width * CGFloat(viewModel.currentPageImporting) / CGFloat(viewModel.totalPagesImporting)
+                                         : 0,
                                     height: 6
                                 )
                         }
@@ -236,6 +237,43 @@ public struct ImportPDFView: View {
                 }
             }
             .padding()
+            .background(grayBackground)
+            .cornerRadius(12)
+            .padding(.horizontal, 20)
+
+        case .completed(let summary):
+            VStack(spacing: 14) {
+                Image(systemName: summary.addedCount > 0 ? "checkmark.circle.fill" : "info.circle.fill")
+                    .foregroundColor(summary.addedCount > 0 ? Color.green : orangeColor)
+                    .font(.system(size: 44))
+
+                Text(summary.addedCount > 0 ? "Import Complete" : "No New Activities")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+
+                VStack(spacing: 4) {
+                    if summary.addedCount > 0 {
+                        Text("\(summary.addedCount) new activity\(summary.addedCount == 1 ? "" : "ies") added")
+                            .font(.body)
+                            .foregroundColor(.black)
+                    }
+
+                    if summary.skippedCount > 0 {
+                        Text("\(summary.skippedCount) duplicate\(summary.skippedCount == 1 ? "" : "s") skipped")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    } else if summary.addedCount == 0 {
+                        Text("All activities in this PDF already exist in your library.")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
             .background(grayBackground)
             .cornerRadius(12)
             .padding(.horizontal, 20)
@@ -295,8 +333,8 @@ public struct ImportPDFView: View {
         case .extracted:
             Button(action: {
                 state = .analyzing
-                viewModel.analyzeWithAI(context: context) {
-                    dismiss()
+                viewModel.analyzeWithAI(context: context) { summary in
+                    state = .completed(summary: summary)
                 }
             }) {
                 HStack {
@@ -309,6 +347,21 @@ public struct ImportPDFView: View {
                 .padding()
                 .background(orangeColor)
                 .cornerRadius(30)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+
+        case .completed:
+            Button(action: {
+                dismiss()
+            }) {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(orangeColor)
+                    .cornerRadius(30)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 20)

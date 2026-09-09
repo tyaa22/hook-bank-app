@@ -2,6 +2,18 @@ import SwiftUI
 import SwiftData
 import Core
 
+public struct ImportSummary: Equatable, Sendable {
+    public let addedCount: Int
+    public let skippedCount: Int
+    public let totalCount: Int
+
+    public init(addedCount: Int, skippedCount: Int, totalCount: Int) {
+        self.addedCount = addedCount
+        self.skippedCount = skippedCount
+        self.totalCount = totalCount
+    }
+}
+
 @Observable
 public final class HomeViewModel {
     // MARK: - PDF Import state
@@ -11,6 +23,7 @@ public final class HomeViewModel {
     var totalPagesImporting: Int = 0
     var extractedPages: [String] = []
     var importError: String? = nil
+    var lastImportSummary: ImportSummary? = nil
 
     private let extractor: DocumentTextExtracting
     private let llmService: LLMActivityExtracting
@@ -54,7 +67,7 @@ public final class HomeViewModel {
     }
 
     /// Step 2 — send extracted pages to Gemini LLM and add results to the activity list.
-    func analyzeWithAI(context: ModelContext, onComplete: @escaping () -> Void) {
+    func analyzeWithAI(context: ModelContext, onComplete: @escaping (ImportSummary) -> Void) {
         guard !extractedPages.isEmpty else { return }
 
         isImporting = true
@@ -80,12 +93,39 @@ public final class HomeViewModel {
                 guard !Task.isCancelled else { return }
 
                 await MainActor.run {
+                    // Fetch existing activities from SwiftData to avoid duplicates
+                    let descriptor = FetchDescriptor<Activity>()
+                    let existingActivities = (try? context.fetch(descriptor)) ?? []
+                    var existingNames = Set(
+                        existingActivities.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                    )
+
+                    var addedCount = 0
+                    var skippedCount = 0
+
                     for activity in newActivities.reversed() {
-                        context.insert(activity)
+                        let normalizedName = activity.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                        guard !normalizedName.isEmpty else { continue }
+
+                        // Skip if already in database or already added in this batch
+                        if !existingNames.contains(normalizedName) {
+                            context.insert(activity)
+                            existingNames.insert(normalizedName)
+                            addedCount += 1
+                        } else {
+                            skippedCount += 1
+                        }
                     }
+
+                    let summary = ImportSummary(
+                        addedCount: addedCount,
+                        skippedCount: skippedCount,
+                        totalCount: newActivities.count
+                    )
+                    self.lastImportSummary = summary
                     self.isImporting = false
                     self.extractedPages = []
-                    onComplete()
+                    onComplete(summary)
                 }
             } catch is CancellationError {
                 // Expected when the sheet is closed mid-analysis; cancelAnalysis() already reset
